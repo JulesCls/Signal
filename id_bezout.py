@@ -1,9 +1,23 @@
+import euclide
+import math
 
-def PGCDRec(a,b):
-    if b==0:
-        return (a,1,0)
+
+def getCoeffBezout(a, b):
+    if b == 0:
+        return 1,0
     else:
-        d,u,v = PGCDRec(b, a%b)
-        return (d,u,v - (a%b)*v)
+        u , v = getCoeffBezout(b , a % b)
+        return v , u - (a//b)*v
 
-print(PGCDRec(781,127))
+def invWithBezout(a, mod):
+    if euclide.pgcdEuclide(a,mod) == 1:
+        inv = getCoeffBezout(a, mod)[0] % mod
+        return inv
+    else:
+        return "Pas possible de calculer l'inverse de {} avec cette méthode".format(a)
+
+
+
+
+print(invWithBezout(781, 127))
+
