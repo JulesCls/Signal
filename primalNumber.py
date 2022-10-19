@@ -58,13 +58,15 @@ def primeFactorization(n, primeNumbers , factorsList = {}):
 
 
 def generatePrimeNumbersList(n):
-    primeNumbers = acceleratedPrimeNumbersGeneration(n)
+    primeNumbers = calculatePrimeNumberUnderN(n)
     primeNumbers.pop(0)
     print("end")
     return primeNumbers
 
+
+
 if __name__ == "__main__":
-    x = 8_000_0089
+    x = 1_000_0089
     # print(generatePrimeNumbersList(x))
     
     print(primeFactorization(x,generatePrimeNumbersList(x)))
