@@ -23,4 +23,19 @@ def calculateNFirstPrimeNumber(n):
     primeNumbers.insert(0,1)
     return(primeNumbers)
 
-print(calculateNFirstPrimeNumber(100))
+def primeFactorization(n):
+    primeNumbers =[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+    factoList = []
+    if isPrime(n):
+        return n
+    else:
+        for i in primeNumbers:
+            r = n/i
+            if r == n//i:
+                factoList.append(i)
+                n = r
+                break
+        factoList.append(primeFactorization(int(n)))
+        return factoList
+        
+print(primeFactorization(345))
