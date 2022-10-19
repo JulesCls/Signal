@@ -22,5 +22,18 @@ def calculateNFirstPrimeNumber(n):
         numberToTest+=1
     primeNumbers.insert(0,1)
     return(primeNumbers)
+    
+def calculatePrimeNumberUnderN(n):
+    primeNumbers = [2]
+    numberToTest = 3
+    while(numberToTest < n):
+        for primeNumber in primeNumbers:
+            if(numberToTest % primeNumber ) == 0:
+                break
+        else:
+            primeNumbers.append(numberToTest)
+        numberToTest+=1
+    primeNumbers.insert(0,1)
+    return(primeNumbers)
 
-print(calculateNFirstPrimeNumber(100))
+
