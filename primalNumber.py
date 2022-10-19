@@ -36,4 +36,12 @@ def calculatePrimeNumberUnderN(n):
     primeNumbers.insert(0,1)
     return(primeNumbers)
 
+if __name__ == "__main__":
+    x = 200
+    print(f"Prime numbers under {x}:")
+    print(calculatePrimeNumberUnderN(x))
+    print(f"\nFirst {x} prime numbers:")
+    print(calculateNFirstPrimeNumber(x))
+    print(f"\nIs {x} Prime")
+    print(isPrime(x))
 
