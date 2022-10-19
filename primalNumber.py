@@ -27,19 +27,25 @@ def calculateNFirstPrimeNumber(n):
     
 def calculatePrimeNumberUnderN(n):
     primeNumbers = [2]
-    numberToTest = 3
-    while(numberToTest < n):
+    for i in range(3,n//2,2):
         for primeNumber in primeNumbers:
-            if(numberToTest % primeNumber ) == 0:
+            if(i % primeNumber ) == 0:
                 break
         else:
-            primeNumbers.append(numberToTest)
-        numberToTest+=1
+            primeNumbers.append(i)
     primeNumbers.insert(0,1)
     return(primeNumbers)
 
+def acceleratedPrimeNumbersGeneration(n):
+    sieve = [True] * (n//2)
+    for i in range(3,int(n**0.5)+1,2):
+        if sieve[i//2]:
+            sieve[i*i//2::i] = [False] * ((n-i*i-1)//(2*i)+1)
+    return [2] + [2*i+1 for i in range(1,n//2) if sieve[i]]
+
+
 def primeFactorization(n, primeNumbers , factorsList = {}):
-    if isPrime(n):
+    if n in primeNumbers:
         utils.addIterationToDictionary(n,factorsList)
         return factorsList
     for i in primeNumbers:
@@ -52,13 +58,15 @@ def primeFactorization(n, primeNumbers , factorsList = {}):
 
 
 def generatePrimeNumbersList(n):
-    primeNumbers = calculatePrimeNumberUnderN(n//2)
+    primeNumbers = acceleratedPrimeNumbersGeneration(n)
     primeNumbers.pop(0)
+    print("end")
     return primeNumbers
 
 if __name__ == "__main__":
-    x = 7
+    x = 8_000_0089
     # print(generatePrimeNumbersList(x))
+    
     print(primeFactorization(x,generatePrimeNumbersList(x)))
 
 
