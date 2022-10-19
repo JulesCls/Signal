@@ -36,6 +36,22 @@ def calculatePrimeNumberUnderN(n):
     primeNumbers.insert(0,1)
     return(primeNumbers)
 
+def primeFactorization(n):
+    primeNumbers = calculatePrimeNumberUnderN(n)
+    primeNumbers.pop(0)
+    factoList = []
+    if isPrime(n):
+        return n
+    else:
+        for i in primeNumbers:
+            r = n/i
+            if r == n//i:
+                factoList += [i]
+                n = r
+                break
+        factoList += primeFactorization(int(n))
+        return factoList
+
 if __name__ == "__main__":
     x = 200
     print(f"Prime numbers under {x}:")
