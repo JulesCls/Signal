@@ -62,8 +62,6 @@ def generatePrimeNumbersList(n):
     primeNumbers.pop(0)
     return primeNumbers
 
-# def phi(n):
-
 
 
 if __name__ == "__main__":
