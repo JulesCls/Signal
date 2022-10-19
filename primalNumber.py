@@ -1,4 +1,4 @@
-import numpy as np
+import utils
 
 def isPrime(n):
   if n == 1:
@@ -34,41 +34,30 @@ def calculatePrimeNumberUnderN(n):
                 break
         else:
             primeNumbers.append(numberToTest)
-            print(f"{numberToTest}-----{len(primeNumbers)}")
         numberToTest+=1
     primeNumbers.insert(0,1)
     return(primeNumbers)
 
-def primeFactorization(n, primeNumbers):
-    tmp = []
-    factoList = []
+def primeFactorization(n, primeNumbers , factorsList = {}):
     if isPrime(n):
-        return [n]
-    else:
-        for i in primeNumbers:
-            r = n/i
-            if r == n//i:
-                tmp.append(i)
-                n = r
-                break
-        tmp.append(primeFactorization(int(n),primeNumbers))
-        for i in tmp:
-            if isinstance(i, int):
-                factoList.append(i)
-            else:
-                for j in i:
-                    factoList.append(j)                
-        return factoList
+        utils.addIterationToDictionary(n,factorsList)
+        return factorsList
+    for i in primeNumbers:
+        if n % i == 0:
+            utils.addIterationToDictionary(i,factorsList)
+            n //= i
+            break
+    primeFactorization(n,primeNumbers,factorsList)
+    return factorsList
+
 
 def generatePrimeNumbersList(n):
-    print("start")
     primeNumbers = calculatePrimeNumberUnderN(n//2)
     primeNumbers.pop(0)
-    print("end")
     return primeNumbers
 
 if __name__ == "__main__":
-    x = 30557040
+    x = 7
     # print(generatePrimeNumbersList(x))
     print(primeFactorization(x,generatePrimeNumbersList(x)))
 
