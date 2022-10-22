@@ -1,15 +1,44 @@
-import random
+import secrets
 import euclide
 
-def generateKeys():
-     public = random.getrandbits(128)
+def generatePublicKey():
+    public = secrets.randbits(128)
+    return public
+
+def generatePrivateKeys(public):
      privateKeys = []
      while len(privateKeys) < 100:
-         privateKey = random.getrandbits(128)
-         if euclide.pgcdEuclide(public,privateKey) == 1:
+        privateKey = secrets.randbits(128)
+        if euclide.pgcdEuclide(public,privateKey) == 1:
              privateKeys.append(privateKey)
-     print(privateKeys)
+     return privateKeys
+
+def definePrivateKey(privateKeys):
+    rank = secrets.randbelow(len(privateKeys))
+    print(rank)
+    privateKey = privateKeys[rank]
+    return privateKey
+
+def testPgcdKeys(public, privateKeys):
+    for i in privateKeys:
+        if euclide.pgcdEuclide(public, i) != 1:
+            return "Pas bon ta fonction"
     
 if __name__ == "__main__":
-    generateKeys()
+    # for i in range(0,10000):
+    #     print(f"Step: {i}")
+    #     public = generatePublicKey()
+    #     privateKeys = generatePrivateKeys(public)
+    #     if testPgcdKeys(public, privateKeys) == "Pas bon ta fonction":
+    #         break
+    #     else:
+    #         pass
+    
+    public = generatePublicKey()
+    privateKeys = generatePrivateKeys(public)
+    privateKey = definePrivateKey(privateKeys)
+    print(privateKey)
+
+           
+
     
