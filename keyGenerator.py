@@ -38,7 +38,3 @@ if __name__ == "__main__":
     privateKeys = generatePrivateKeys(public)
     privateKey = definePrivateKey(privateKeys)
     print(privateKey)
-
-           
-
-    
