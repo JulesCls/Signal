@@ -56,9 +56,22 @@ def generatePrimeNumbersList(n):
     primeNumbers.pop(0)
     return primeNumbers
 
+def phi(n):
+    result = 1
+    if n == 1:
+        return 1
+    else:
+        eachPrimeFacto = primeFactorization(n,generatePrimeNumbersList(n)).keys()
+        for number in eachPrimeFacto:
+            number = (1-(1/number))
+            result *= number
+        result *= n
+    return int(result)
+
+
 if __name__ == "__main__":
-    x = 7
+    x = 178940
     # print(generatePrimeNumbersList(x))
-    print(primeFactorization(x,generatePrimeNumbersList(x)))
+    print(phi(x))
 
 
