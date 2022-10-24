@@ -1,13 +1,13 @@
-import lsfr, euclide, secrets
+import prng, euclide, secrets
 
 def generatePublicKey():
-    public = lsfr.xorshift()
+    public = prng.xorshift()
     return public
 
 def generatePrivateKeys(public):
      privateKeys = []
      while len(privateKeys) < 100:
-        privateKey = lsfr.xorshift()
+        privateKey = prng.xorshift()
         if euclide.pgcdEuclide(public,privateKey) == 1:
              privateKeys.append(privateKey)
      return privateKeys
