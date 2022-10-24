@@ -20,6 +20,15 @@ def generateRandomSplitInt(numberSize, sectionNumber):
         splitNumber.reverse()
         return splitNumber
 
+def concatenateInteger(list):
+    for i in range(0,4):
+        list[i] = list[i] << (32*(len(list)-(i+1)))
+    output = list[0] | list[1] | list[2] | list[3]
+    return output
+
+
+
+
 if __name__ == "__main__":
-    print(generateSplitInt(128,4))
+    print(generateRandomSplitInt(128,4))
     
