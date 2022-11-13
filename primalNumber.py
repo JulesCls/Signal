@@ -27,7 +27,7 @@ def calculateNFirstPrimeNumber(n):
     
 def calculatePrimeNumberUnderN(n):
     primeNumbers = [2]
-    for i in range(3,n//2,2):
+    for i in range(3,n,2):
         for primeNumber in primeNumbers:
             if(i % primeNumber ) == 0:
                 break
@@ -77,9 +77,9 @@ def phi(n):
 
 
 if __name__ == "__main__":
-    x = 178940
-    # print(generatePrimeNumbersList(x))
-    
+    x = 300
+    #print(generatePrimeNumbersList(x))
+    print(calculatePrimeNumberUnderN(x))
     print(phi(x))
 
 
