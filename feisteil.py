@@ -1,4 +1,5 @@
 import id_bezout
+import lsfr
 
 def chiffrementAffine(x,p,key):
     if x > p:
@@ -15,25 +16,24 @@ def xor(block,key):
     # print('xor function :', bin(block^key))
     return block^key
 
-def feistel(block,iterations,key,encryptionFunction,blockSize = 16):
+def feistel(block,iterations,key,nextKeyGeneratorFunction,encryptionFunction,blockSize = 16,decryptionMode = False):
+    keys = [key]
+    for i in range (1,iterations):
+        keys.append(nextKeyGeneratorFunction(keys[i-1]))
     size = blockSize//2
     g = block >> size
     mask = int('0'*size+'1'*size,2)
     d = block & mask
+    print(keys)
+    print(bin(g),bin(d))
     for i in range (0 ,iterations):
-        g,d = d,g^encryptionFunction(key,d)
-    return (g << size) + d
+        if decryptionMode:
+            d,g = g,d^encryptionFunction(keys[len(keys)-1-i],g)
+        else:
+            g,d = d,g^encryptionFunction(keys[i],d)
+        
 
-
-def feistelReverse(block,iterations,key,decryptionFunction,blockSize = 16):
-    size = blockSize//2
-    g = block >> size
-    mask = int('0'*size+'1'*size,2)
-    d = block & mask
-    print(bin(d),bin(g))
-    for i in range (0 ,iterations):
-        d,g = g,d^decryptionFunction(key,g)
-        print(bin(d),bin(g))
+        print(bin(g),bin(d))
     return (g << size) + d
 
 if __name__ =="__main__":
@@ -46,9 +46,10 @@ if __name__ =="__main__":
 
     key = int('01001011',2)
     message = int('1001001101011010',2)
-    c = feistel(message,2,key,xor)
+    iterations = 12
+    c = feistel(message,iterations,key,lsfr.basicLsfr8bits,xor)
     
-    reversed = feistelReverse(c,2,key,xor)
+    reversed = feistel(c,iterations,key,lsfr.basicLsfr8bits,xor,decryptionMode=True)
     print("RESULTS")
     print(bin(c))
     print(reversed)
