@@ -1,2 +1,6 @@
 test de rabin miller
-lsfr
+lsfr*3
+generate big number 2048
+DES
+CBC
+

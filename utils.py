@@ -64,7 +64,6 @@ def unMergeBinaryString(data):
     res = res[::-1]
     print(res)
 
-
 def concatenateStringList(stringList):
     return ''.join(stringList)
 
