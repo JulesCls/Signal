@@ -1,4 +1,4 @@
-import utils
+import utils,secrets
 
 def xorshift():
     seed = utils.generateRandomSplitInt(128,4)
@@ -13,9 +13,9 @@ def xorshift():
     result = utils.concatenateInteger(output)
     return result
 
+# def lsfr(list, input):
+#     while input.bit_length() < 2048:
+
+
 if __name__ == "__main__":
-        print(xorshift())
-
-
-
-    
+    print(2)
