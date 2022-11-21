@@ -1,4 +1,4 @@
-import utils
+import utils, random, rabinMiller
 
 def isPrime(n):
   if n == 1:
@@ -74,6 +74,15 @@ def phi(n):
             result *= number
         result *= n
     return int(result)
+
+
+def getPrimeNumber(length=2048):
+    primaryNumber = None
+    while primaryNumber==None:
+        numToTest = random.getrandbits(length)
+        if (rabinMiller.miller_rabin(numToTest,128)):
+            primaryNumber = numToTest
+    return primaryNumber
 
 
 if __name__ == "__main__":
