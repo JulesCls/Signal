@@ -37,13 +37,27 @@ def concatenateInteger(list):
 
 def groupByBlock(blockSize, input):
     blocks = []
-    if isinstance(input,str) == False:
-        return 'Need string input'
+    if isinstance(input,int):
+        blocks = groupByBits(6,input)
+        return blocks
     else:
         for i in range(0,len(input),blockSize//8):
-            print(i)
             blocks.append(input[i:(i+blockSize//8)])
         return blocks
+
+def groupByBits(sizeList,input):
+    bits = []
+    if isinstance(input,int) == False:
+        return 'Need int input'
+    else:
+        for i in bin(input):
+            bits.append(i)
+        bits = bits[2:]
+        while len(bits) < sizeList:
+            bits.insert(0,0)
+        for i in range(0,len(bits)):
+            bits[i] = int(bits[i])
+        return bits
 
 def mergeBinaryString(block):
     value = ord(block[0])
@@ -64,8 +78,12 @@ def unMergeBinaryString(data):
     res = res[::-1]
     print(res)
 
-def concatenateStringList(stringList):
-    return ''.join(stringList)
+def concatenateList(bits):          #convert binary list into one int
+    for i in range(0,len(bits)):
+        bits[i] = str(bits[i])
+    string = ''.join(bits)
+    n = int(string, 2)
+    return n
 
         
 
@@ -89,22 +107,26 @@ if __name__ == "__main__":
     # print(msg)
     # print(convertStrToBinary('t'))
     # print(convertBinaryToStr(convertStrToBinary('test')))
-    input = '♥∟zi'
-    b1 = (ord(input[0]) << 8) + ord(input[1])
-    b2 = (ord(input[2]) << 8) + ord(input[3])
-    # print(ord('t'),ord('e'),ord('s'))
-    res = b1^b2
-    print(b1,b2,res)
-    r1 = res >> 8
-    r2 = res & 0b0000000011111111
-    print(chr(r1),chr(r2))
-    str = groupByBlock(64, 'fopqgofqùgrekgyg365gi46huih4evffdofoffjfdùqjfeq')
-    print(str)
-    print(concatenateStringList(str))
+    # input = '♥∟zi'
+    # b1 = (ord(input[0]) << 8) + ord(input[1])
+    # b2 = (ord(input[2]) << 8) + ord(input[3])
+    # # print(ord('t'),ord('e'),ord('s'))
+    # res = b1^b2
+    # print(b1,b2,res)
+    # r1 = res >> 8
+    # r2 = res & 0b0000000011111111
+    # print(chr(r1),chr(r2))
+    # str = groupByBlock(64, 'fopqgofqùgrekgyg365gi46huih4evffdofoffjfdùqjfeq')
+    # print(str)
+    # print(concatenateStringList(str))
 
-    text = 'test'
-    x = mergeBinaryString(text)
-    print(bin(x))
-    print(unMergeBinaryString(x))
+    # text = 'test'
+    # x = mergeBinaryString(text)
+    # print(bin(x))
+    # print(unMergeBinaryString(x))
+
+    n = 100
+    print(groupByBits(16,n))
+
 
 
