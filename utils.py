@@ -26,16 +26,7 @@ def concatenateInteger(list):
     output = list[0] | list[1] | list[2] | list[3]
     return output
 
-# def convertStrToBinary(string): #adapt from https://blog.finxter.com/how-to-convert-a-string-to-binary-in-python/
-#     string = bytearray(string, 'utf-8')
-#     res = []
-#     for bytes in string:
-#         res.append(bin(bytes)[2:].zfill(8))
-#     return int(''.join(res),10)
-
-# # def convertBinaryToStr(bin):
-
-def groupByBlock(blockSize, input):
+def groupByBlock(blockSize, input):     #split a string into a list of blocks with a certain size of bits
     blocks = []
     if isinstance(input,int):
         blocks = groupByBits(6,input)
@@ -45,7 +36,7 @@ def groupByBlock(blockSize, input):
             blocks.append(input[i:(i+blockSize//8)])
         return blocks
 
-def groupByBits(sizeList,input):
+def groupByBits(sizeList,input):            #return a sized list of binary numbers of integer input
     bits = []
     if isinstance(input,int) == False:
         return 'Need int input'
@@ -59,14 +50,14 @@ def groupByBits(sizeList,input):
             bits[i] = int(bits[i])
         return bits
 
-def mergeBinaryString(block):
+def mergeBinaryString(block):    #convert a string block in its unicode integer   
     value = ord(block[0])
     for i in range(1,len(block)):
         value <<= 8
         value += ord(block[i])
     return value
 
-def unMergeBinaryString(data):
+def unMergeBinaryString(data):   #convert an integer into utf-8 encoded string
     mask = int("1"*8,2)
     res = ''
     while data > mask:
@@ -76,12 +67,12 @@ def unMergeBinaryString(data):
     value = data & mask
     res += chr(value)
     res = res[::-1]
-    print(res)
+    return res
 
-def concatenateList(bits):          #convert binary list into one int
+def concatenateList(bits):          #convert binary list into one integer
     for i in range(0,len(bits)):
         bits[i] = str(bits[i])
-    string = ''.join(bits)
+    string = ''.join(bits)       
     n = int(string, 2)
     return n
 
@@ -120,13 +111,13 @@ if __name__ == "__main__":
     # print(str)
     # print(concatenateStringList(str))
 
-    # text = 'test'
-    # x = mergeBinaryString(text)
-    # print(bin(x))
-    # print(unMergeBinaryString(x))
+    text = 'test'
+    x = mergeBinaryString(text)
+    print(x)
+    print(unMergeBinaryString(x))
 
-    n = 100
-    print(groupByBits(16,n))
+    # n = 100
+    # print(groupByBits(16,n))
 
 
 
