@@ -25,16 +25,7 @@ def miller_rabin(n, k):
     return True
 
 #imported from https://gist.github.com/Ayrx/5884790
-
-
-def generateKeys():
-    p = getPrimeNumber()
-    generatorElement = random.randrange(1,p)
-    privateKey = getPrimeNumber()
-    publicKey = pow(generatorElement,privateKey)
-    return {"public-key": publicKey, "private-key": privateKey}
-
-        
+   
 
 if __name__ == "__main__":
     number = 67073

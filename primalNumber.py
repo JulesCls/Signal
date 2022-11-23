@@ -80,7 +80,7 @@ def getPrimeNumber(length=2048):
     primaryNumber = None
     while primaryNumber==None:
         numToTest = random.getrandbits(length)
-        if (rabinMiller.miller_rabin(numToTest,128)):
+        if (rabinMiller.miller_rabin(numToTest,40)):
             primaryNumber = numToTest
     return primaryNumber
 
