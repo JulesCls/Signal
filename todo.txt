@@ -4,3 +4,4 @@ generate big number 2048
 DES
 CBC
 
+Demander si p est permier alors i<p est élément générateur
