@@ -11,11 +11,11 @@ class User:
         self.publishKeys()
     
     def generateKeys(self):
-        p = primalNumber.getPrimeNumber(length=2048)
+        p = primalNumber.getPrimeNumber(length=1024)
         print("Prime done")
         generatorElement = random.randrange(1,p)
         print("generator element done")
-        self.privateKey =primalNumber.getPrimeNumber(length=2048)
+        self.privateKey =primalNumber.getPrimeNumber(length=1024)
         print("private key done")
         self.publicKey = pow(generatorElement,self.privateKey,p)
         print("public key done")
