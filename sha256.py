@@ -79,13 +79,17 @@ class sha256():
         self.textInput = utils.mergeBinaryString(self.textInput)
         self.textInput <<= 1
         self.textInput+=1
-        self.textInput <<= (512-self.originalLength-1)
+        self.textInput <<= (512-(self.originalLength%512)-1)
         self.textInput+=self.originalLength
-        for i in range(16):
-            self.m.insert(0,(self.textInput>>(i*32)) & (int("1"*32,2)))
 
     def getHash(self) -> str:
         return self.textInput
+
+    def iterateThroughBlocks(self):
+        for _ in range(16):
+            self.textInput = self.textInput>>32
+            self.m.insert(0,self.textInput & (int("1"*32,2)))
+
 
     def calculateW(self):
         for i in range(len(self.m)):
