@@ -57,6 +57,7 @@ def mergeBinaryString(block):    #convert a string block in its unicode integer
         value += ord(block[i])
     return value
 
+
 def unMergeBinaryString(data):   #convert an integer into utf-8 encoded string
     mask = int("1"*8,2)
     res = ''
