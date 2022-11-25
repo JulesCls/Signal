@@ -1,5 +1,6 @@
 import utils
-
+import feisteil
+import lsfr
 
 def permutation(type, block):
     if type == 1:
@@ -112,8 +113,12 @@ def desEncryptionFunction(key, block):      #f function of DES
     res = utils.concatenateList(permutation(2,c))
     return res
     
-
-
+def TDesEncrypt(block,key):
+    if block > (2^64)-1:
+        raise Exception("Block size is too long")
+    else:
+        cypher = feisteil.feistel(block,16,key,lsfr.basicLsfr8bits(key),desEncryptionFunction(key,block),64)
+        return cypher
 
 if __name__ == "__main__":
     inte = 126843500074
