@@ -25,6 +25,19 @@ class LSFR:
         self.seed &= int("1"*self.size,2)
         return self.seed
 
+    def reversedIteration(self):
+        newBit = None
+        for position in self.positions:
+            tempValue = 1 & (self.seed >> position)
+            if newBit==None:
+                newBit = tempValue
+            else:
+                newBit=newBit&tempValue
+        if(newBit == 1 ):
+            self.seed+= pow(2,self.size)
+        self.seed >>= 1
+        return self.seed
+
     def getValue(self):
         return self.seed
 
