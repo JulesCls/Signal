@@ -77,6 +77,21 @@ def concatenateList(bits):          #convert binary list into one integer
     n = int(string, 2)
     return n
 
+def stringToByteArray(string): #convert string to byte array
+    res = bytearray(string, 'utf-8')
+    return res
+
+def bytesArrayToInt(bytesArray): #convert byte array to an integer
+    res = 0
+    for byte in bytesArray:
+        res+= int(byte)
+        res<<= 8
+    res>>=8
+    return res
+
+def stringToInt(string): #convert string to integer
+    return bytesArrayToInt(stringToByteArray(string))
+
         
 
 

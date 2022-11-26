@@ -6,110 +6,33 @@ def Ch(e,f,g):
 def Maj(a,b,c):
     return (a&b)^(a&c)^(b&c)
 
-class E0():
-    rotate2 = lsfr.LSFR(0,[0],32)
-    rotate13 = lsfr.LSFR(0,[0],32)
-    rotate22 = lsfr.LSFR(0,[0],32)
-    baseValue = 0
-    
-    def doRotations(self) -> None:
-        self.rotate2.setSeed(self.baseValue)
-        for _ in range(2):
-            self.rotate2.reversedIteration()
-        self.rotate13.setSeed(self.baseValue)
-        for _ in range(13):
-            self.rotate13.reversedIteration()
-        self.rotate22.setSeed(self.baseValue)
-        for _ in range(22):
-            self.rotate22.reversedIteration()
 
-    def operate(self,value) -> int:
-        self.baseValue = value
-        self.doRotations()
-        return self.rotate2.getValue() ^ self.rotate13.getValue() ^ self.rotate22.getValue() 
-
-class E1():
-    rotate6 = lsfr.LSFR(0,[0],32)
-    rotate11 = lsfr.LSFR(0,[0],32)
-    rotate25 = lsfr.LSFR(0,[0],32)
-    baseValue = 0
-    
-    def doRotations(self) -> None:
-        self.rotate6.setSeed(self.baseValue)
-        for _ in range(6):
-            self.rotate6.reversedIteration()
-        self.rotate11.setSeed(self.baseValue)
-        for _ in range(11):
-            self.rotate11.reversedIteration()
-        self.rotate25.setSeed(self.baseValue)
-        for _ in range(25):
-            self.rotate25.reversedIteration()
-
-    def operate(self,value) -> int:
-        self.baseValue = value
-        self.doRotations()
-        return self.rotate6.getValue() ^ self.rotate11.getValue() ^ self.rotate25.getValue() 
-
-class Sigma0:
-    rotate7 = lsfr.LSFR(0,[0],32)
-    rotate18 = lsfr.LSFR(0,[0],32)
-    baseValue = 0
-    
-    def doRotations(self) -> None:
-        self.rotate7.setSeed(self.baseValue)
-        for _ in range(7):
-            self.rotate7.reversedIteration()
-        self.rotate18.setSeed(self.baseValue)
-        for _ in range(18):
-            self.rotate18.reversedIteration()
-        self.baseValue >>= 3
-
-    def operate(self,value) -> int:
-        self.baseValue = value
-        self.doRotations()
-        return self.rotate18.getValue() ^ self.rotate7.getValue() ^ self.baseValue
+def rotateValueXTimes(value,x):
+    for _ in range(x):
+        newBit = value & 1
+        if(newBit == 1 ):
+            value+= pow(2,32)
+        value >>= 1
+    return value
 
 
-class Sigma1:
-    rotate17 = lsfr.LSFR(0,[0],32)
-    rotate19 = lsfr.LSFR(0,[0],32)
-    baseValue = 0
-    
-    def doRotations(self) -> None:
-        self.rotate17.setSeed(self.baseValue)
-        for _ in range(17):
-            self.rotate17.reversedIteration()
-        
-        self.rotate19.setSeed(self.baseValue)
-        for _ in range(19):
-            self.rotate19.reversedIteration()
-        self.baseValue >>= 10
+def E0(x): #Used to do summ0 operation in w calculations
+    return rotateValueXTimes(x,2) ^ rotateValueXTimes(x,13) ^ rotateValueXTimes(x,22) 
 
-    def operate(self,value) -> int:
-        self.baseValue = value
-        self.doRotations()
-        return self.rotate19.getValue() ^ self.rotate17.getValue() ^ self.baseValue
+def E1(x): #Used to do summ1 operation in w calculations
+    return rotateValueXTimes(x,6) ^ rotateValueXTimes(x,11) ^ rotateValueXTimes(x,25) 
 
+def sigma0(x): #Used to do sigma0 operation in w calculations
+    return rotateValueXTimes(x,18) ^ rotateValueXTimes(x,7) ^ (x>>3) 
 
+def sigma1(x): #Used to do sigma1 operation in w calculations
+    return rotateValueXTimes(x,19) ^ rotateValueXTimes(x,17) ^ (x>>10) 
 class sha256():
     mod = pow(2,32)
-    sigma0 = Sigma0()
-    sigma1 = Sigma1()
-    e1 = E1()
-    e0 = E0()
     textInput = ""
-    treatedBlock = None
-    m = []
     w = []
     originalLength = 0
-    H0 = 0x6a09e667
-    H1 = 0xbb67ae85
-    H2 = 0x3c6ef372
-    H3 = 0xa54ff53a
-    H4 = 0x510e527f
-    H5 = 0x9b05688c
-    H6 = 0x1f83d9ab
-    H7 = 0x5be0cd19
+    
     ROUND_CONSTANTS = (
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -119,66 +42,68 @@ class sha256():
     0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
-)
+    )
     N = 1
-    a = H0
-    b = H1
-    c = H2
-    d = H3
-    e = H4
-    f = H5
-    g = H6
-    h = H6
+    a = b = c = d = e = f = g = h = H0 = H1 = H2 = H2 = H4 = H5 = H6 = H7 = None
 
-        
-
+    def initializeH(self):
+        self.H0 = 0x6a09e667
+        self.H1 = 0xbb67ae85
+        self.H2 = 0x3c6ef372
+        self.H3 = 0xa54ff53a
+        self.H4 = 0x510e527f
+        self.H5 = 0x9b05688c
+        self.H6 = 0x1f83d9ab
+        self.H7 = 0x5be0cd19
+    
     def hash(self,textInput) -> str:
         self.textInput = textInput
-        self.preProcess()
-        print(bin(self.textInput))
-        for i in range(self.N):
-            self.iterateThroughBlocks()
-            self.calculateW()
-            self.setVariables()
-            self.calculateVariables()
-            self.setHVariables()
-        self.postProcess()
+        self.preProcess() #prepare our block
+        self.initializeH()
+        for _ in range(self.N):
+            self.iterateThroughBlocks() #prepare w0 to 15
+            self.calculateW()  #calculate w16 to 63
+            self.setVariables() #set a,b,c.. to H0,H1,h2...
+            self.calculateVariables() #calculate a,b,c... transformations for the block
+            self.setHVariables() #assign a+H0 to h0... 
+            self.N-=1
+        self.postProcess() # concatenate hex values
         
         return self.textInput
 
-    def preProcess(self):
-        self.originalLength = len(self.textInput)*8
-        self.N = self.originalLength // 512
+    def preProcess(self): #preprocess string, add 1 and x 0 to the end, to make it a multiple of 512
+        bytesArray = utils.stringToByteArray(self.textInput)
+        self.originalLength = len(bytesArray)*8
+        self.N = (self.originalLength // 512)+1
         if (self.originalLength > (self.N*512)-64):
             self.N+=1
-        self.textInput = utils.mergeBinaryString(self.textInput)
+        self.textInput = utils.bytesArrayToInt(bytesArray)
         self.textInput <<= 1
         self.textInput+=1
-        self.textInput <<= (512-(self.originalLength%512)-1)
+        self.textInput <<= (self.N*512-(self.originalLength+1))
         self.textInput+=self.originalLength
 
-    def postProcess(self):
+    def postProcess(self): #hash to hex
         self.textInput = "" + hex(self.H0)+hex(self.H1)+hex(self.H2)+hex(self.H3)+hex(self.H4)+hex(self.H5)+hex(self.H6)+hex(self.H7)
 
-    def iterateThroughBlocks(self):
-        input = self.textInput
+    def iterateThroughBlocks(self): #prepare first w values
+        self.w = []
+        input = self.textInput >> ((self.N-1)*512)
+        input = (int("1"*512,2)) & input
         for _ in range(16):
-            self.m.insert(0,input & (int("1"*32,2)))
+            self.w.insert(0,input & (int("1"*32,2)))
             input = input>>32
 
-
-    def calculateW(self):
-        for i in range(len(self.m)):
-            self.w.append(self.m[i])
+    def calculateW(self): # calculate following w values
         for t in range(16,64):
-            wt = (self.sigma1.operate(self.w[t-2]) + self.w[t-7] + self.sigma0.operate(self.w[t-15]) + self.w[t-16]) % self.mod
+            wt = (sigma1(self.w[t-2]) + self.w[t-7] + sigma0(self.w[t-15]) + self.w[t-16]) % self.mod
             wt%=pow(2,32)
             self.w.append(wt)
 
-    def calculateVariables(self):
-        for t in range(64):
-            T1 = (self.h + self.e1.operate(self.e) + Ch(self.e,self.f,self.g) + self.ROUND_CONSTANTS[t] + self.w[t]) % self.mod
-            T2 = (self.e0.operate(self.a) + Maj(self.a,self.b,self.c)) % self.mod
+    def calculateVariables(self): #calculate a,b,c... transformations for the block
+        for t in range(64):                
+            T1 = (self.h + E1(self.e) + Ch(self.e,self.f,self.g) + self.ROUND_CONSTANTS[t] + self.w[t]) % self.mod
+            T2 = (E0(self.a) + Maj(self.a,self.b,self.c)) % self.mod
             self.h = self.g
             self.g = self.f
             self.f = self.e
@@ -188,10 +113,7 @@ class sha256():
             self.b = self.a
             self.a = (T1 + T2) % self.mod
             
-
-    
-    def setVariables(self):
-        
+    def setVariables(self):   #set a,b,c.. to H0,H1,h2...
         self.a = self.H0
         self.b = self.H1
         self.c = self.H2
@@ -201,7 +123,7 @@ class sha256():
         self.g = self.H6
         self.h = self.H7
 
-    def setHVariables(self):
+    def setHVariables(self): #assign a+H0 to h0... 
         self.H0 = (self.a + self.H0)%self.mod
         self.H1 = (self.b + self.H1)%self.mod
         self.H2 = (self.c + self.H2)%self.mod
@@ -215,8 +137,6 @@ class sha256():
 
 if __name__ == "__main__":
     sha = sha256()
-    # print(bin(sha.getHash()))
-    # s0 = sigma0()
-    print(sha.hash("Yo"))
-    # print(bin(s0.operate(int("11000111_00011100_01100100_11000001",2))))
+    print(sha.hash("salut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseur"))
+    print(sha.hash("salut je m'appelle henry je "))
     
