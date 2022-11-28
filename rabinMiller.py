@@ -36,5 +36,5 @@ if __name__ == "__main__":
     #     eleList.append(pow(genEle,i)%number)
     # eleList.sort()
     # print([*range(1,number)] == eleList)
-    print(miller_rabin(140677,128))
+    print(miller_rabin(140645969594959594934055696594939459696945969679749355696994340394959949330395967,32567980))
 

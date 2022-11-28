@@ -8,7 +8,5 @@ def exponentiationRapide(a,e,mod):
         a = (a*a) % mod
     return result
 
-print(exponentiationRapide(13,172,23))
-
 
         

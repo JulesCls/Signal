@@ -1,4 +1,4 @@
-import utils, random, rabinMiller
+import utils, secrets, rabinMiller
 
 def isPrime(n):
   if n == 1:
@@ -79,16 +79,21 @@ def phi(n):
 def getPrimeNumber(length=2048):
     primaryNumber = None
     while primaryNumber==None:
-        numToTest = random.getrandbits(length)
+        numToTest = secrets.randbits(length)
         if (rabinMiller.miller_rabin(numToTest,40)):
             primaryNumber = numToTest
     return primaryNumber
 
+def getPrimeNumberUnderN(n):
+    primeNumber = getPrimeNumber()
+    if primeNumber < n :
+        return primeNumber
+    else:
+        getPrimeNumberUnderN(n)
+
 
 if __name__ == "__main__":
-    x = 300
-    #print(generatePrimeNumbersList(x))
-    print(calculatePrimeNumberUnderN(x))
-    print(phi(x))
+    x = secrets.randbits(2048)
+    print(acceleratedPrimeNumbersGeneration(x))
 
 
