@@ -1,4 +1,4 @@
-import utils, lsfr
+import utils, lsfr, hashlib
 
 def Ch(e,f,g):
     return (e&f)^(~(e)&g)
@@ -77,7 +77,7 @@ class sha256():
         self.N = (self.originalLength // 512)+1
         if (self.originalLength > (self.N*512)-64):
             self.N+=1
-        self.textInput = utils.bytesArrayToInt(bytesArray)
+        self.textInput = utils.mergeBinaryString(bytesArray)
         self.textInput <<= 1
         self.textInput+=1
         self.textInput <<= (self.N*512-(self.originalLength+1))
@@ -138,5 +138,11 @@ class sha256():
 if __name__ == "__main__":
     sha = sha256()
     print(sha.hash("salut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseur"))
-    print(sha.hash("salut je m'appelle henry je "))
+    print(sha.hash("é"))
+
+    m = hashlib.sha256()
+    test = 'é'
+    test = test.encode('utf-16-be')
+    m.update(test)
+    print(m.hexdigest())
     

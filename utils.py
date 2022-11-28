@@ -78,7 +78,7 @@ def concatenateList(bits):          #convert binary list into one integer
     return n
 
 def stringToByteArray(string): #convert string to byte array
-    res = bytearray(string, 'utf-8')
+    res = bytearray(string, 'utf-16-be')
     return res
 
 def bytesArrayToInt(bytesArray): #convert byte array to an integer
@@ -132,6 +132,7 @@ if __name__ == "__main__":
     print(x)
     print(unMergeBinaryString(x))
 
+    print(bin(ord('é')))
     # n = 100
     # print(groupByBits(16,n))
 
