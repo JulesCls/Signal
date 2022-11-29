@@ -77,14 +77,14 @@ class sha256():
         self.N = (self.originalLength // 512)+1
         if (self.originalLength > (self.N*512)-64):
             self.N+=1
-        self.textInput = utils.mergeBinaryString(bytesArray)
+        self.textInput = utils.bytesArrayToInt(bytesArray)
         self.textInput <<= 1
         self.textInput+=1
         self.textInput <<= (self.N*512-(self.originalLength+1))
         self.textInput+=self.originalLength
 
     def postProcess(self): #hash to hex
-        self.textInput = "" + hex(self.H0)+hex(self.H1)+hex(self.H2)+hex(self.H3)+hex(self.H4)+hex(self.H5)+hex(self.H6)+hex(self.H7)
+        self.textInput = "" + hex(self.H0)[2:]+hex(self.H1)[2:]+hex(self.H2)[2:]+hex(self.H3)[2:]+hex(self.H4)[2:]+hex(self.H5)[2:]+hex(self.H6)[2:]+hex(self.H7)[2:]
 
     def iterateThroughBlocks(self): #prepare first w values
         self.w = []
@@ -137,12 +137,14 @@ class sha256():
 
 if __name__ == "__main__":
     sha = sha256()
-    print(sha.hash("salut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseursalut je m'appelle henry je vais très bien et vous madame la proviseur"))
-    print(sha.hash("é"))
-
+    test = "sdjfhsdkfhj&é-èçà__çè_ç-è-(yiugshjkfnslkef usfhj kdsfhl ezuify è_-_èf (-sdçfè a_zfy ze))"
+    
     m = hashlib.sha256()
-    test = 'é'
-    test = test.encode('utf-16-be')
-    m.update(test)
-    print(m.hexdigest())
+    t2 = test
+    t2 = t2.encode('utf-16-be')
+    m.update(t2)
+
+    print(sha.hash(test) == m.hexdigest())
+
+    
     
