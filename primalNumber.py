@@ -1,4 +1,4 @@
-import utils, secrets, rabinMiller
+import utils, secrets, rabinMiller, expo_Rapide, time
 
 def isPrime(n):
   if n == 1:
@@ -79,10 +79,41 @@ def phi(n):
 def getPrimeNumber(length=2048):
     primaryNumber = None
     while primaryNumber==None:
+        # print("generate prime")
         numToTest = secrets.randbits(length)
         if (rabinMiller.miller_rabin(numToTest,40)):
             primaryNumber = numToTest
     return primaryNumber
+
+def findGeneratorElement(p):
+    generatorElement = None
+    p1 = p-1
+    q = p1//2
+    while not(generatorElement):
+        g = secrets.randbelow(p1)
+        v3 = expo_Rapide.mod_pow(g,p1,p)
+        if (v3 != 1):
+            continue
+        v1 = expo_Rapide.mod_pow(g,q,p)
+        v2 = expo_Rapide.mod_pow(g,2,p)
+        # print("testing generator")
+        if len(set([p,v1,v2,v3])) == 4 and v3 == 1:
+            generatorElement = g
+    return generatorElement
+
+def getNumberWithGeneratorElement(length=2048):
+    q = getPrimeNumber(length)
+    p = q* 2 + 1
+    while not(rabinMiller.miller_rabin(p,40)):
+        q = getPrimeNumber(length)
+        p = q* 2 + 1
+    g = findGeneratorElement(p)
+    # v = [x for x in range(1,p)]
+    # v1 = [expo_Rapide.mod_pow(g,x,p) for x in range(1,p)]
+    # v1.sort()
+    # print(v == v1)
+    return (p,g)
+    
 
 def getPrimeNumberUnderN(n):
     primeNumber = getPrimeNumber()
@@ -92,8 +123,13 @@ def getPrimeNumberUnderN(n):
         getPrimeNumberUnderN(n)
 
 
+
 if __name__ == "__main__":
-    x = secrets.randbits(2048)
-    print(acceleratedPrimeNumbersGeneration(x))
+    start_time = time.time()
+    print(getNumberWithGeneratorElement())
+    end_time = time.time()
+
+    print('Temps d\'exécution de la fonction :', end_time - start_time)
+    
 
 
