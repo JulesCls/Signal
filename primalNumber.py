@@ -1,4 +1,4 @@
-import utils, secrets, rabinMiller, expo_Rapide, time
+import utils, secrets, rabinMiller, expo_Rapide, time, json
 
 def isPrime(n):
   if n == 1:
@@ -112,7 +112,7 @@ def getNumberWithGeneratorElement(length=2048):
     # v1 = [expo_Rapide.mod_pow(g,x,p) for x in range(1,p)]
     # v1.sort()
     # print(v == v1)
-    return (p,g)
+    return {"prime_number" : p, "generator_element" : g}
     
 
 def getPrimeNumberUnderN(n):
@@ -122,11 +122,15 @@ def getPrimeNumberUnderN(n):
     else:
         getPrimeNumberUnderN(n)
 
-
+def write_to_file(data,filename):
+    with open(filename,"w") as f:
+        f.write(json.dumps(data))
 
 if __name__ == "__main__":
     start_time = time.time()
-    print(getNumberWithGeneratorElement())
+    p_g = getNumberWithGeneratorElement()
+    print(p_g)
+    write_to_file(p_g,"2048bits.txt")
     end_time = time.time()
 
     print('Temps d\'exécution de la fonction :', end_time - start_time)
