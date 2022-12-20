@@ -27,7 +27,7 @@ def sigma0(x): #Used to do sigma0 operation in w calculations
 
 def sigma1(x): #Used to do sigma1 operation in w calculations
     return rotateValueXTimes(x,19) ^ rotateValueXTimes(x,17) ^ (x>>10) 
-class sha256():
+class Sha256():
     mod = pow(2,32)
     textInput = ""
     w = []
@@ -57,7 +57,7 @@ class sha256():
         self.H7 = 0x5be0cd19
     
     def hash(self,textInput) -> str:
-        self.textInput = textInput
+        self.textInput = str(textInput)
         self.preProcess() #prepare our block
         self.initializeH()
         for _ in range(self.N):
@@ -70,6 +70,9 @@ class sha256():
         self.postProcess() # concatenate hex values
         
         return self.textInput
+
+    def int_hash(self,textInput) -> int:
+        return int(self.hash(str(textInput)),16)
 
     def preProcess(self): #preprocess string, add 1 and x 0 to the end, to make it a multiple of 512
         bytesArray = utils.stringToByteArray(self.textInput)
@@ -136,7 +139,7 @@ class sha256():
 
 
 if __name__ == "__main__":
-    sha = sha256()
+    sha = Sha256()
     test = "sdjfhsdkfhj&é-èçà__çè_ç-è-(yiugshjkfnslkef usfhj kdsfhl ezuify è_-_èf (-sdçfè a_zfy ze))"
     
     m = hashlib.sha256()
@@ -144,6 +147,9 @@ if __name__ == "__main__":
     t2 = t2.encode('utf-16-be')
     m.update(t2)
 
+    print(sha.int_hash(test))
+    print(sha.hash(test) == hex(sha.int_hash(test))[2:])
+    print(m.hexdigest())
     print(sha.hash(test) == m.hexdigest())
 
     

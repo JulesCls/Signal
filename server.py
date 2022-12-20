@@ -23,6 +23,8 @@ class Server:
             self.read_prime_generator_from_file()
         return (self._public_prime,self._public_generator)
 
+    
+
 
     def read_prime_generator_from_file(self) -> None: #load prime number and generator from file
         with open(self._public_info_storage,"r") as f:
