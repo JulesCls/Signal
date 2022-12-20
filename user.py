@@ -1,40 +1,52 @@
-import primalNumber,random,json,os
+import primalNumber,random,json,os,secrets
+from server import Server
+from typing import Tuple,TypedDict
+from expo_Rapide import mod_pow
+
+class idCouple(TypedDict):
+    public : int
+    private : int
 
 class User:
-    name = ""
-    publicKey = None
-    privateKey = None
+    name:str = ""
+    id:idCouple #public/private id
+    server:Server = Server()
 
-    def __init__(self,name) -> None:
+
+    def __init__(self,name:str) -> None:
         self.name = name
-        self.generateKeys()
-        self.publishKeys()
-    
-    def generateKeys(self):
-        p = primalNumber.getPrimeNumber(length=1024)
-        print("Prime done")
-        generatorElement = random.randrange(1,p)
-        print("generator element done")
-        self.privateKey =primalNumber.getPrimeNumber(length=1024)
-        print("private key done")
-        self.publicKey = pow(generatorElement,self.privateKey,p)
-        print("public key done")
+        self.id = {"public": None, "private" : None}
+        if not(self.load_saved_info()):
+            self.id["public"] = secrets.randbelow(self.server.get_public_prime())
+            self.write_public_info()
+        self.id["private"] = mod_pow(self.server.get_public_generator(),self.id["public"],self.server.get_public_prime())
 
-    def getPublicKey(self):
-        return self.publicKey
-    
-    def getPrivateKey(self):
-        return self.privateKey
+    def write_public_info(self):
+        directory = self.name.lower()
+        if not(os.path.exists(directory)):
+            os.mkdir(directory)
+        directory+= "/.pub"
+        if not(os.path.exists(directory)):
+            with open(directory,"w") as f:
+                f.write(json.dumps({"public_id" : self.id["public"]}))
 
+    def load_saved_info(self) -> bool:
+        directory = self.name.lower()
+        if not(os.path.exists(directory)):
+            return False
+        directory+= "/.pub"
+        if not(os.path.exists(directory)):
+            return False
+        with open(directory,"r") as f:
+            data = json.loads(f.read())
+            self.id["public"] = data["public_id"]
+        return True
 
-    def publishKeys(self):
-        data = {
-            'ID' : self.publicKey
-        }
-        filename = self.name.lower() + "/keys.pub","w"
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename,"w") as f:
-            f.write(json.dumps(data))
+    def get_public_id(self)-> int:
+        return self.id["public"]
 
 if __name__ == "__main__":
     alice = User("Alice")
+
+    bob = User("Bobe")
+    print(bob.get_public_id() == alice.get_public_id())
