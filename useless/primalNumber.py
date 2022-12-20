@@ -1,4 +1,5 @@
-import  secrets, rabinMiller, time, json
+import  secrets, time, json, utils_old
+from utils_old import expo_rapide
 
 def isPrime(n):
   if n == 1:
@@ -46,11 +47,11 @@ def acceleratedPrimeNumbersGeneration(n):
 
 def primeFactorization(n, primeNumbers , factorsList = {}):
     if n in primeNumbers:
-        utils.addIterationToDictionary(n,factorsList)
+        utils_old.addIterationToDictionary(n,factorsList)
         return factorsList
     for i in primeNumbers:
         if n % i == 0:
-            utils.addIterationToDictionary(i,factorsList)
+            utils_old.addIterationToDictionary(i,factorsList)
             n //= i
             break
     primeFactorization(n,primeNumbers,factorsList)
@@ -81,7 +82,7 @@ def getPrimeNumber(length=2048):
     while primaryNumber==None:
         # print("generate prime")
         numToTest = secrets.randbits(length)
-        if (rabinMiller.miller_rabin(numToTest,40)):
+        if (utils_old.miller_rabin(numToTest,40)):
             primaryNumber = numToTest
     return primaryNumber
 
@@ -104,7 +105,7 @@ def findGeneratorElement(p):
 def getNumberWithGeneratorElement(length=2048):
     q = getPrimeNumber(length)
     p = q* 2 + 1
-    while not(rabinMiller.miller_rabin(p,40)):
+    while not(utils_old.rabin_miller(p,40)):
         q = getPrimeNumber(length)
         p = q* 2 + 1
     g = findGeneratorElement(p)
