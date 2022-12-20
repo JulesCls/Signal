@@ -5,7 +5,7 @@ class HMAC256:
     @staticmethod
     def hexdigest(key:bytearray,message:bytearray):
         sha256 = SHA256()
-        
+        #ensure that key is < to 64 bytes
         if len(key) < 64:
             key += b'\x00' * (64 - len(key))
         elif len(key) > 64:
@@ -17,12 +17,12 @@ class HMAC256:
         k2 = bytearray(key)
         
         for i in range(64): #xor each byte
-            k1[i] ^= 0x36 #ipad
-            k2[i] ^= 0x5c #opad
+            k1[i] ^= 0x36 #ipad XOR key
+            k2[i] ^= 0x5c #opad XOR key
         
         
-        h1 = sha256.digest(k1 + message)
-        hmac_hash = sha256.hexdigest(k2 + h1)
+        h1 = sha256.digest(k1 + message) #concat  (ipad XOR key) & m
+        hmac_hash = sha256.hexdigest(k2 + h1) # concat (opad XOR key) & h1
 
         # Return hash in hex format
         return hmac_hash
@@ -39,4 +39,4 @@ class HMAC256:
 if __name__ == "__main__":
     key ="a key".encode()
     message = 'my message'.encode()
-    print(HMAC256.digest(key,message))
+    print(HMAC256.hexdigest(key,message))

@@ -120,8 +120,10 @@ class SHA256:
         return '{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}'.format(self.h0, self.h1, self.h2, self.h3,self.h4, self.h5, self.h6, self.h7)
 
     def digest(self, message_bytes):
-        
         return bytes.fromhex(self.hexdigest(message_bytes))
+
+    def arraydigest(self,message_bytes):
+        return bytearray.fromhex(self.hexdigest(message_bytes))
     
     def update(self, data):
         data = self.padding(data)
