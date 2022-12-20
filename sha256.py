@@ -26,7 +26,8 @@ def sigma0(x): #Used to do sigma0 operation in w calculations
     return rotateValueXTimes(x,18) ^ rotateValueXTimes(x,7) ^ (x>>3) 
 
 def sigma1(x): #Used to do sigma1 operation in w calculations
-    return rotateValueXTimes(x,19) ^ rotateValueXTimes(x,17) ^ (x>>10) 
+    return rotateValueXTimes(x,19) ^ rotateValueXTimes(x,17) ^ (x>>10)
+    
 class Sha256():
     mod = pow(2,32)
     textInput = ""

@@ -1,21 +1,28 @@
 import utils
 import feisteil
 import lsfr
+import codecs
 
-def permutation(type, block):
+def permutation(type, block: bytes):
     if type == 1:
-        bits = utils.groupByBits(64, block)
-        res = [None] * 64
         permutationList = [58, 50, 42, 34, 26, 18, 10, 2,
-                            60, 52, 44, 36, 28, 20, 12, 4,
-                            62, 54, 46, 38, 30, 22, 14, 6,
-                            64, 56, 48, 40, 32, 24, 16, 8,
-                            57, 49, 41, 33, 25, 17, 9 ,1
-    ,                        59, 51, 43, 35, 27, 19, 11, 3,
-                            61, 53, 45, 37, 29, 21, 13, 5,
-                            63, 55, 47, 39, 31, 23, 15, 7]
-        for i,j in zip(permutationList, range(0,len(bits))):
-            res[j] = bits[i-1]
+                           60, 52, 44, 36, 28, 20, 12, 4,
+                           62, 54, 46, 38, 30, 22, 14, 6,
+                           64, 56, 48, 40, 32, 24, 16, 8,
+                           57, 49, 41, 33, 25, 17, 9, 1,
+                           59, 51, 43, 35, 27, 19, 11, 3,
+                           61, 53, 45, 37, 29, 21, 13, 5,
+                           63, 55, 47, 39, 31, 23, 15, 7]
+        bits = []
+        res = []
+        if len(block) != 8:
+            raise ValueError("Block must be 64 bits long")
+        for b in block:
+            bit = bin(b)[2:].zfill(8)
+            bits.extend([int(x) for x in bit])
+        for i in permutationList:
+            res.append(bits[i-1])
+        res = utils.convert_int_list_to_utf8(res)
         return res
     
     elif type == 2:
@@ -119,10 +126,17 @@ def TDesEncrypt(block,key):
     else:
         cypher = feisteil.feistel(block,16,key,lsfr.basicLsfr8bits(key),desEncryptionFunction(key,block),64)
         return cypher
+    
 
 if __name__ == "__main__":
-    inte = 126843500074
-    k = 256674556
-
-    b = desEncryptionFunction(k, inte)
-    print(b)
+    # blocks = utils.string_to_blocks("Hello, world!")
+    # i=[]
+    # for block in blocks:
+    #     res = permutation(1,block)
+    #     print(block)
+    #     print(res)
+    
+    b = '0b10011111'
+    i = int(b,2)
+    i = i.to_bytes(8, 'big')
+    print(i.decode('hex'))

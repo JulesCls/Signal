@@ -6,7 +6,7 @@ class Server:
     _public_prime = None
     _public_generator = None
 
-    _public_info_storage = "1024bits.txt"
+    _public_info_storage = "2048bits.txt"
 
     def __new__(cls):
         if not cls._instance:
