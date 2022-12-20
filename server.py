@@ -1,4 +1,4 @@
-import json, primalNumber
+import json, utils
 from typing import Tuple
 
 class Server:
@@ -7,7 +7,7 @@ class Server:
     _public_generator = None
     _numbers_in_cache = False
 
-    _public_info_storage = "2048bits.txt"
+    _public_info_storage = "pub.txt"
 
     def __new__(cls):
         if not cls._instance:
@@ -43,7 +43,7 @@ class Server:
         
 
     def generate_new_public_numbers(self):
-        p_g = primalNumber.getNumberWithGeneratorElement()
+        p_g = utils.get_number_with_generator_element()
         with open(self._public_info_storage,"w") as f:
             f.write(json.dumps(p_g))
         print("Generation done.")

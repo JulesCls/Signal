@@ -1,4 +1,4 @@
-import euclide, secrets, prng
+import euclide, secrets, prng 
 
 def generatePublicKey():
     public = prng.xorshift()

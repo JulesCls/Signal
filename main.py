@@ -1,1 +1,1 @@
-import primalNumber as primeFunctions
+

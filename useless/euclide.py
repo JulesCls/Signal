@@ -1,4 +1,4 @@
-import math,timeit,inspect,numpy
+import math,timeit,inspect
 
 
 def divisionEuclidienne(a, b):

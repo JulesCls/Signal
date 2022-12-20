@@ -1,6 +1,7 @@
 from server import Server
-import sha256,expo_Rapide,secrets
+import secrets
 from user import User
+from utils import expo_rapide
 
 
 class Elgamal():
@@ -9,11 +10,11 @@ class Elgamal():
 
     def keyGeneration(self):
         secretKey = secrets.randbelow(self.p-1) #user.getPrivateID()
-        publicKey = expo_Rapide.mod_pow(self.g,secretKey,self.p) #user.getPublicID
+        publicKey = expo_rapide(self.g,secretKey,self.p) #user.getPublicID
         return (publicKey,secretKey)
 
     def signatureGen():
-        
+        pass
 
 if __name__ == "__main__":
     elg = Elgamal()

@@ -1,4 +1,5 @@
-import primalNumber, euclide, secrets, id_bezout,expo_Rapide,math
+import primalNumber, euclide, secrets, id_bezout,math
+from utils import expo_rapide
 
 class Rsa:
     size = None
@@ -23,7 +24,7 @@ class Rsa:
     def encrypt(self,message,keyPair: dict):
         pub = keyPair['pubKeys']
         if type(message) == int:
-            cypher = expo_Rapide.exponentiationRapide(message,pub[1],pub[0]) # C congrue M**e mod n
+            cypher = expo_rapide(message,pub[1],pub[0]) # C congrue M**e mod n
             return cypher
         else:
             raise Exception("Incorrect type of input : Need int to encrypt the message")
@@ -31,7 +32,7 @@ class Rsa:
     def decrypt(self,cypher,keyPair: dict):
         priv = keyPair['privKeys']
         if type(cypher) == int:
-            message = expo_Rapide.exponentiationRapide(cypher,priv[1],priv[0]) # M congrue C**d mod n
+            message = expo_rapide(cypher,priv[1],priv[0]) # M congrue C**d mod n
             return message
         else:
             raise Exception("Incorrect type of input : Need int to decrypt the message")

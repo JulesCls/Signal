@@ -1,164 +1,86 @@
-import secrets,sys
+import secrets, json, random
 
-def addIterationToDictionary(number,dictionary):
-    if(number in dictionary):
-        dictionary[number] +=1
+def expo_rapide(base, exponent, modulus):
+  result = 1
+  while exponent > 0:
+    if exponent % 2 == 1:
+      result = result * base % modulus
+    exponent = exponent // 2
+    base = base * base % modulus
+  return result
+
+def get_prime_number(length=2048):
+    primaryNumber = None
+    while primaryNumber==None:
+        # print("generate prime")
+        numToTest = secrets.randbits(length)
+        if (rabin_miller(numToTest,40)):
+            primaryNumber = numToTest
+    return primaryNumber
+
+def _find_generator_element(p):
+    generatorElement = None
+    p1 = p-1
+    q = p1//2
+    while not(generatorElement):
+        g = secrets.randbelow(p1)
+        v3 = expo_rapide(g,p1,p)
+        if (v3 != 1):
+            continue
+        v1 = expo_rapide(g,q,p)
+        v2 = expo_rapide(g,2,p)
+        # print("testing generator")
+        if len(set([p,v1,v2,v3])) == 4 and v3 == 1:
+            generatorElement = g
+    return generatorElement
+
+def get_number_with_generator_element(length=2048):
+    q = get_prime_number(length)
+    p = q* 2 + 1
+    while not(rabin_miller(p,40)):
+        q = get_prime_number(length)
+        p = q* 2 + 1
+    g = _find_generator_element(p)
+    return {"prime_number" : p, "generator_element" : g}
+    
+
+def get_prime_number_under_n(n):
+    primeNumber = get_prime_number()
+    if primeNumber < n :
+        return primeNumber
     else:
-        dictionary[number] = 1
+        get_prime_number_under_n(n)
 
-def generateRandomSplitInt(numberSize, sectionNumber):
-    value = secrets.randbits(numberSize)
-    splitNumber = []
-    sectionSize = numberSize//sectionNumber
-    if numberSize % sectionNumber != 0:
-        return "Cannot split because of unequal sections"
-    else:
-        mask = (1 << sectionSize) - 1
-        for i in range(sectionNumber):
-            splitNumber.append(value & mask)
-            value >>= sectionSize
-        splitNumber.reverse()
-        return splitNumber
-
-def concatenateInteger(list):
-    for i in range(0,4):
-        list[i] = list[i] << (32*(len(list)-(i+1)))
-    output = list[0] | list[1] | list[2] | list[3]
-    return output
-
-def groupByBlock(blockSize, input):     #split a string into a list of blocks with a certain size of bits
-    blocks = []
-    if isinstance(input,int):
-        blocks = groupByBits(6,input)
-        return blocks
-    else:
-        for i in range(0,len(input),blockSize//8):
-            blocks.append(input[i:(i+blockSize//8)])
-        return blocks
-
-def groupByBits(sizeList,input):            #return a sized list of binary numbers of integer input
-    bits = []
-    if isinstance(input,int) == False:
-        return 'Need int input'
-    else:
-        for i in bin(input):
-            bits.append(i)
-        bits = bits[2:]
-        while len(bits) < sizeList:
-            bits.insert(0,0)
-        for i in range(0,len(bits)):
-            bits[i] = int(bits[i])
-        return bits
-
-def mergeBinaryString(block):    #convert a string block in its unicode integer   
-    value = ord(block[0])
-    for i in range(1,len(block)):
-        value <<= 8
-        value += ord(block[i])
-    return value
+def write_to_file(data,filename):
+    with open(filename,"w") as f:
+        f.write(json.dumps(data))
 
 
-def unMergeBinaryString(data):   #convert an integer into utf-8 encoded string
-    mask = int("1"*8,2)
-    res = ''
-    while data > mask:
-        value = data & mask
-        res += chr(value)
-        data >>= 8
-    value = data & mask
-    res += chr(value)
-    res = res[::-1]
-    return res
+def rabin_miller(n, k):
+    if n == 2:
+        return True
 
-def concatenateList(bits):          #convert binary list into one integer
-    for i in range(0,len(bits)):
-        bits[i] = str(bits[i])
-    string = ''.join(bits)       
-    n = int(string, 2)
-    return n
+    if n % 2 == 0:
+        return False
 
-def stringToByteArray(string): #convert string to byte array
-    res = bytearray(string, 'utf-16-be')
-    return res
-
-def bytesArrayToInt(bytesArray): #convert byte array to an integer
-    res = 0
-    for byte in bytesArray:
-        res+= int(byte)
-        res<<= 8
-    res>>=8
-    return res
-
-def stringToInt(string): #convert string to integer
-    return bytesArrayToInt(stringToByteArray(string))
-
-def string_to_blocks(string: str):
-    # Convert the string to a bytes object
-    data = string.encode()
-        
-    # Initialize an empty list to store the blocks
-    blocks = []
-        
-    # Split the data into blocks of 128 bits (16 bytes)
-    for i in range(0, len(data), 16):
-        block = data[i:i+16]
-        # If the block is not 64 bits long, pad it with 0s
-        block = block.ljust(16, b'\x00')
-        blocks.append(block)
-            
-    return blocks
-
-def convert_int_list_to_utf8(int_list):
-    # Convert the list of integers into a binary string
-    binary = ''.join(str(i) for i in int_list)
-    print(binary)
-    # Convert the binary string into an integer
-    integer = int(binary, 2)
-    print(bin(integer))
-    # Convert the integer into a bytes object of 64 bits
-    b = integer.to_bytes(8, sys.byteorder)
-    print(b)
-    # Encode the bytes object as UTF-8
-    utf8 = b.decode()
-    return utf8
-
-
-
+    r, s = 0, n - 1
+    while s % 2 == 0:
+        r += 1
+        s //= 2
+    for _ in range(k):
+        a = random.randrange(2, n - 1)
+        x = expo_rapide(a,s,n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = expo_rapide(x,2,n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
 
 if __name__ == "__main__":
-    # n = generateRandomSplitInt(128,4)
-    # print(n)
-    # print(concatenateInteger(n))
-
-    # string = "@jul hello bb"
-    # print(string)
-    # string.strip()
-    # string = string.split(" ", 1)
-    # string[0] = string[0].replace("@", "")
-    # print(string)
-
-    # msg = "[date] name: message"
-    # msg = msg.split(":")[0].split("] ")[1]
-    # print(msg)
-    # print(convertStrToBinary('t'))
-    # print(convertBinaryToStr(convertStrToBinary('test')))
-    # input = '♥∟zi'
-    # b1 = (ord(input[0]) << 8) + ord(input[1])
-    # b2 = (ord(input[2]) << 8) + ord(input[3])
-    # # print(ord('t'),ord('e'),ord('s'))
-    # res = b1^b2
-    # print(b1,b2,res)
-    # r1 = res >> 8
-    # r2 = res & 0b0000000011111111
-    # print(chr(r1),chr(r2))
-    # str = groupByBlock(64, 'fopqgofqùgrekgyg365gi46huih4evffdofoffjfdùqjfeq')
-    # print(str)
-    # print(concatenateStringList(str))
-
-    text = 'test'
-    x = mergeBinaryString(text)
-    print(x)
-    print(unMergeBinaryString(x))
 
     print(bin(ord('é')))
     # n = 100

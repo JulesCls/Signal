@@ -1,4 +1,4 @@
-import utils, secrets, rabinMiller, expo_Rapide, time, json
+import  secrets, rabinMiller, time, json
 
 def isPrime(n):
   if n == 1:
@@ -91,11 +91,11 @@ def findGeneratorElement(p):
     q = p1//2
     while not(generatorElement):
         g = secrets.randbelow(p1)
-        v3 = expo_Rapide.mod_pow(g,p1,p)
+        v3 = expo_rapide(g,p1,p)
         if (v3 != 1):
             continue
-        v1 = expo_Rapide.mod_pow(g,q,p)
-        v2 = expo_Rapide.mod_pow(g,2,p)
+        v1 = expo_rapide(g,q,p)
+        v2 = expo_rapide(g,2,p)
         # print("testing generator")
         if len(set([p,v1,v2,v3])) == 4 and v3 == 1:
             generatorElement = g
@@ -108,10 +108,6 @@ def getNumberWithGeneratorElement(length=2048):
         q = getPrimeNumber(length)
         p = q* 2 + 1
     g = findGeneratorElement(p)
-    # v = [x for x in range(1,p)]
-    # v1 = [expo_Rapide.mod_pow(g,x,p) for x in range(1,p)]
-    # v1.sort()
-    # print(v == v1)
     return {"prime_number" : p, "generator_element" : g}
     
 

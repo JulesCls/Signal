@@ -1,7 +1,8 @@
-import primalNumber,random,json,os,secrets
+import random,json,os,secrets
 from server import Server
 from typing import Tuple,TypedDict
-from expo_Rapide import mod_pow
+from utils import expo_rapide
+
 
 class idCouple(TypedDict):
     public : int
@@ -19,7 +20,7 @@ class User:
         if not(self.load_saved_info()):
             self.id["public"] = secrets.randbelow(self.server.get_public_prime())
             self.write_public_info()
-        self.id["private"] = mod_pow(self.server.get_public_generator(),self.id["public"],self.server.get_public_prime())
+        self.id["private"] = expo_rapide(self.server.get_public_generator(),self.id["public"],self.server.get_public_prime())
 
     def write_public_info(self):
         directory = self.name.lower()
