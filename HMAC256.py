@@ -1,37 +1,42 @@
-from sha256 import Sha256
-import primalNumber,utils
+from sha256 import SHA256
 
+class HMAC256:
 
-def HMAC_256(key:int,m:int):
-    sha256 = Sha256()
-    opad = 0x5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c
-    ipad = 0x3636363636363636363636363636363636363636363636363636363636363636
-    print(len(bin(ipad)))
+    @staticmethod
+    def hexdigest(key:bytearray,message:bytearray):
+        sha256 = SHA256()
+        #ensure that key is < to 64 bytes
+        if len(key) < 64:
+            key += b'\x00' * (64 - len(key))
+        elif len(key) > 64:
+            key = sha256.digest(key)
 
-    if len(bin(key)[2:]) > 256:
-        key = sha256.int_hash(key)
-    while(len(bin(key)[2:0]) > 256):
-        key <<= 1
+        
+        # Create array of byte from key
+        k1 = bytearray(key)
+        k2 = bytearray(key)
+        
+        for i in range(64): #xor each byte
+            k1[i] ^= 0x36 #ipad XOR key
+            k2[i] ^= 0x5c #opad XOR key
+        
+        
+        h1 = sha256.digest(k1 + message) #concat  (ipad XOR key) & m
+        hmac_hash = sha256.hexdigest(k2 + h1) # concat (opad XOR key) & h1
 
-    left_operation = key ^ opad
-    right_operation = sha256.int_hash((key ^ ipad) | m)
+        # Return hash in hex format
+        return hmac_hash
 
-    return sha256.int_hash(left_operation | right_operation)
+    @staticmethod
+    def digest(key:bytearray,message:bytearray):
+        return bytes.fromhex(HMAC256.hexdigest(key,message)) #return hash in bytes format
+
+    @staticmethod
+    def arraydigest(key:bytearray,message:bytearray):
+        return bytearray.fromhex(HMAC256.hexdigest(key,message)) #return hash in bytearray format
+
 
 if __name__ == "__main__":
-    sha256 = Sha256()
-    key = 1347970089728574169630159058194593715446431332080111800307126033557879564623561271064755333325920715118756313806805813307389675662594418400047194434929731
-    message = "hello je suis un message"
-    print(message)
-    message = utils.mergeBinaryString(message)
-    print(message)
-    print(utils.unMergeBinaryString(message))
-    print(hex(HMAC_256(key,message)))
-
-
-    key = utils.unMergeBinaryString(key).encode()
+    key ="a key".encode()
     message = 'my message'.encode()
-    import hashlib
-    import hmac
-    hmac_obj = hmac.new(key, message,hashlib.sha256)
-    print(hmac_obj.hexdigest())
+    print(HMAC256.hexdigest(key,message))
