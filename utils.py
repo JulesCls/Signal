@@ -1,4 +1,4 @@
-import secrets
+import secrets,sys
 
 def addIterationToDictionary(number,dictionary):
     if(number in dictionary):
@@ -92,7 +92,35 @@ def bytesArrayToInt(bytesArray): #convert byte array to an integer
 def stringToInt(string): #convert string to integer
     return bytesArrayToInt(stringToByteArray(string))
 
+def string_to_blocks(string: str):
+    # Convert the string to a bytes object
+    data = string.encode()
         
+    # Initialize an empty list to store the blocks
+    blocks = []
+        
+    # Split the data into blocks of 128 bits (16 bytes)
+    for i in range(0, len(data), 16):
+        block = data[i:i+16]
+        # If the block is not 64 bits long, pad it with 0s
+        block = block.ljust(16, b'\x00')
+        blocks.append(block)
+            
+    return blocks
+
+def convert_int_list_to_utf8(int_list):
+    # Convert the list of integers into a binary string
+    binary = ''.join(str(i) for i in int_list)
+    print(binary)
+    # Convert the binary string into an integer
+    integer = int(binary, 2)
+    print(bin(integer))
+    # Convert the integer into a bytes object of 64 bits
+    b = integer.to_bytes(8, sys.byteorder)
+    print(b)
+    # Encode the bytes object as UTF-8
+    utf8 = b.decode()
+    return utf8
 
 
 
