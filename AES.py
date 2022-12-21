@@ -64,16 +64,25 @@ def string_to_blocks(string: str):
         blocks.append(block)
     return blocks
 
+def stateInit(block: bytes):
+    block = bytearray(block)
+    state = [[],[],[],[]]
+    # convert a block of 16 bytes datas to 4x4 state
+    for i in range(4):
+        for j in range(4):
+            state[i].append(block[j+4*i].to_bytes(1,'big'))
+    return state
+
 def rotWord(word: bytes): #left rotation of word
     #need 32-bit word bytes object as input
     if len(word) != 4:
         raise ValueError("Need a 32-bits word to rotate correctly")
     else:
-        res = int.from_bytes(word, sys.byteorder)
+        res = int.from_bytes(word, 'big')
         b0 = res >> 24
         res &= int("1"*24,2)
         res = (res << 8) | b0
-        return res.to_bytes(4,sys.byteorder)
+        return res.to_bytes(4,'big')
 
 def subWord(word: bytes): #subsitute word using S_BOX
     #need 32-bit word bytes object as input
@@ -82,7 +91,7 @@ def subWord(word: bytes): #subsitute word using S_BOX
     else:
         #replace each bytes in word by its translation in the S_BOX table
         for i,j in zip(word,range(4)):
-            word = word.replace(word[j].to_bytes(1,sys.byteorder), S_BOX[i].to_bytes(1,sys.byteorder))
+            word = word.replace(word[j].to_bytes(1,'big'), S_BOX[i].to_bytes(1,'big'))
         return word
 
 def key_expansion(key: int):
@@ -93,33 +102,73 @@ def key_expansion(key: int):
     rcon = [0x01000000, 0x02000000, 0x04000000, 0x08000000, 0x10000000, 0x20000000, 0x40000000]
     
     #convert int key in bytes object and then split the key in 32-bits word and add them in the round keys list
-    key = key.to_bytes(32,sys.byteorder)
+    key = key.to_bytes(32,'big')
     for i in range(n):
         round_keys.insert(i,key[4*i:4*(i+1)])
     
     for i in range(8,60):
         #insert w words each 8th such as Wi = Wi-n ^ subword(rotword(Wi-1)) ^ rcon[i//n] 
         if i % 8 == 0:
-            round_keys.insert(i, (int.from_bytes(round_keys[i-n],sys.byteorder) ^ int.from_bytes(subWord(rotWord(round_keys[i-1])),sys.byteorder) ^ rcon[(i//n)-1]).to_bytes(4,sys.byteorder))
+            round_keys.insert(i, (int.from_bytes(round_keys[i-n],'big') ^ int.from_bytes(subWord(rotWord(round_keys[i-1])),'big') ^ rcon[(i//n)-1]).to_bytes(4,'big'))
             continue
         #insert w words each 8i+4th such as Wi = Wi-n ^ subword(Wi-1)
-        elif i % 8 == 4:
-            round_keys.insert(i, (int.from_bytes(round_keys[i-n],sys.byteorder) ^ int.from_bytes(subWord(round_keys[i-1]),sys.byteorder)).to_bytes(4,sys.byteorder))
+        elif i % 4 == 0:
+            round_keys.insert(i, (int.from_bytes(round_keys[i-n],'big') ^ int.from_bytes(subWord(round_keys[i-1]),'big')).to_bytes(4,'big'))
             continue
         else:
             #insert w words otherwise such as Wi = Wi-n ^ Wi-1
-            round_keys.insert(i, (int.from_bytes(round_keys[i-n],sys.byteorder) ^ int.from_bytes(round_keys[i-1],sys.byteorder)).to_bytes(4,sys.byteorder))     
+            round_keys.insert(i, (int.from_bytes(round_keys[i-n],'big') ^ int.from_bytes(round_keys[i-1],'big')).to_bytes(4,'big'))     
             continue
-    
-    # concatenate 4*32-bits word to get 15*128bits round_key
+    # concatenate 4*32-bits word to get 15*128bits round_key and left rotate again by 4 bytes
     for i in range(0,60,4):
         round_keys[i//4] = b''.join(round_keys[i:i+4])
     round_keys = round_keys[0:15]
-    
     return round_keys
+
+#this function perform a xor of bytes one by one between a state and a round_key
+def addRoundKey(state: list[list[bytearray]], round_keys: bytes) -> list[list[bytearray]]:
+    i = 0
+    #iteration in each byte of the state
+    for line in state:
+        for byte in line:
+            #the old byte of the state is replaced by result of xor operation with the byte at the same postion in the round_key
+            line[i%4] = (int.from_bytes(byte,'big') ^ round_keys[i]).to_bytes(1,'big')
+            i += 1
+    return state
+
+#SubBytes use the same S_BOX as the subWord function, so we loop 4 times to substitute the whole state
+def subBytes(state: list[list[bytearray]]) -> list[list[bytearray]]:
+    i = 0
+    for line in state:
+        #each line is substitute using subWord function
+        word = subWord(b''.join(line))
+        #then each byte of initial state is replaced by the new substituted ones
+        for _ in line:
+            line[i%4] = word[i%4].to_bytes(1,'big')
+            i += 1
+    return state
+
+#same function as subBytes but with the INV_S_BOX
+def invSubBytes(state: list[list[bytearray]]) -> list[list[bytearray]]:
+    i = 0
+    for line in state:
+        for byte in line:
+            #iteration through the whole state and replace the value of bytes by his translations in the INV_S_BOX
+            line[i%4] = byte.replace(line[i%4], INV_S_BOX[int.from_bytes(byte,'big')].to_bytes(1,'big'))
+            i += 1
+    return state
     
 if __name__ == "__main__":
-    n = random.getrandbits(256)
-    print(key_expansion(n))
+    n = 0x0
+    keys = key_expansion(n)
+    print(keys[10])
+    st = 'heeloooooooooooooo'
+    st = string_to_blocks(st)
+    st = stateInit(st[0])
+    print(st)
+    # print(addRoundKey(st,keys[10]))
+    print(subBytes(st))
+    print(invSubBytes(st))
+    
     
 
