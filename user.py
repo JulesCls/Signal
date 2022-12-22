@@ -9,45 +9,50 @@ class idCouple(TypedDict):
     private : int
 
 class User:
-    name:str = ""
-    id:idCouple #public/private id
-    server:Server = Server()
+    _name:str = ""
+    _id:idCouple #public/private id
+    _server:Server = Server()
 
 
-    def __init__(self,name:str) -> None:
-        self.name = name
-        self.id = {"public": None, "private" : None}
+    def __init__(self,_name:str) -> None:
+        self._name = _name
+        self._id = {"public": None, "private" : None}
         if not(self.load_saved_info()):
-            self.id["public"] = secrets.randbelow(self.server.get_public_prime())
-            self.write_public_info()
-        self.id["private"] = expo_rapide(self.server.get_public_generator(),self.id["public"],self.server.get_public_prime())
+            self._id["private"] = secrets.randbelow(self._server.get_public_prime()-2)
+            self._id["public"] = expo_rapide(self._server.get_public_generator(),self._id["private"],self._server.get_public_prime())
+            self.write_info()
 
-    def write_public_info(self):
-        directory = self.name.lower()
+    def write_info(self): #write public/private couple into user_name/.priv file to load it later
+        directory = self._name.lower()
         if not(os.path.exists(directory)):
             os.mkdir(directory)
-        directory+= "/.pub"
+        directory+= "/.priv"
         if not(os.path.exists(directory)):
             with open(directory,"w") as f:
-                f.write(json.dumps({"public_id" : self.id["public"]}))
+                f.write(json.dumps(self._id))
+        directory = self._name.lower() + "/.pub"  #write public key into user_name/.pub file to use it in next steos by servor
+        if not(os.path.exists(directory)):
+            with open(directory,"w") as f:
+                f.write(json.dumps({"public_id" : self._id["public"]}))
 
     def load_saved_info(self) -> bool:
-        directory = self.name.lower()
+        directory = self._name.lower()
         if not(os.path.exists(directory)):
             return False
-        directory+= "/.pub"
+        directory+= "/.priv"
         if not(os.path.exists(directory)):
             return False
         with open(directory,"r") as f:
-            data = json.loads(f.read())
-            self.id["public"] = data["public_id"]
+            self._id = json.loads(f.read())
         return True
 
     def get_public_id(self)-> int:
-        return self.id["public"]
+        return self._id["public"]
 
 if __name__ == "__main__":
     alice = User("Alice")
 
     bob = User("Bobe")
     print(bob.get_public_id() == alice.get_public_id())
+    p,g = alice._server.get_public_prime_and_generator_as_tuple()
+    print(expo_rapide(g,alice._id["private"],p) == alice._id["public"])

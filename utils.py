@@ -1,4 +1,4 @@
-import secrets, json, random
+import secrets, json, random, euclide, math
 
 def expo_rapide(base, exponent, modulus):
   result = 1
@@ -80,9 +80,31 @@ def rabin_miller(n, k):
             return False
     return True
 
-if __name__ == "__main__":
+def get_coeff_bezout(a, b):
+    if b == 0:
+        return 1,0
+    else:
+        u , v = get_coeff_bezout(b , a % b)
+        return v , u - (a//b)*v
 
-    print(bin(ord('é')))
+def inv_bezout(a, mod):
+    if euclide.pgcdEuclide(a,mod) == 1:
+        inv = get_coeff_bezout(a, mod)[0] % mod
+        return inv 
+    else:
+        return "Pas possible de calculer l'inverse de {} avec cette méthode".format(a)
+
+def inverse(k, p):
+    if math.gcd(k, p) != 1:
+        return None
+    inverse = pow(k, -1, p)
+    return inverse
+
+if __name__ == "__main__":
+    p = 10
+    k = 3
+    print(inv_bezout(k,p))
+    print(inverse(k,p))
     # n = 100
     # print(groupByBits(16,n))
 
