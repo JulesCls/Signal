@@ -37,7 +37,7 @@ if __name__ == "__main__":
     plain_text = b"This is a secret message"
 
     cipher_text = rc4.encrypt(plain_text)
-    print()
+    print(cipher_text)
 
     rc4 = RC4(key)
     decrypted_text = rc4.decrypt(cipher_text)
