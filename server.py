@@ -1,4 +1,4 @@
-import json, utils, os
+import json, utils, os, random
 from typing import Tuple
 
 class Server:
@@ -50,16 +50,59 @@ class Server:
             f.write(json.dumps(p_g))
         print("Generation done.")
 
-    def send_message(self,user,message:str,target:str) -> None:
-        conversation_directory = self.get_conversation_directory_name(user,target)
-        if os.path.exists(conversation_directory):
-            pass
-        else:
-            #need to init conversation with x3dh
-            os.makedirs(os.path.join(self._server_directory_path, user.get_name() +"-"+ target))
-            self.initialize_key_share(user,conversation_directory)
+    def _conversation_exists(self,conversation_directory) -> bool:
+        return os.path.exists(conversation_directory)
+           
 
+    def _check_for_pre_keys(self,conversation_directory,target) -> None|int:
+        file = os.path.join(conversation_directory,target+".keys")
+        target_info = None
+        if os.path.exists(file):
+            with open(file,"r") as f:
+                target_info = json.loads(f.read())
+                key_number = random.randint(0,len(target_info["OtPK"])-1)
+                target_info["OtPK"] = target_info["OtPK"][key_number] 
+                with open(os.path.join(conversation_directory,target+".key"),"w") as f2:
+                    f2.write(str(key_number))
+            os.remove(file)
+            return target_info            
+        return target_info
+
+    def _check_for_selected_pre_key(self,conversation_directory,target) -> None|int:
+        file = os.path.join(conversation_directory,target+".key")
+        if os.path.exists(file):
+            with(file,"r") as f:
+                key = int(f.read())
+                return key
+        return None
+
+
+    def connect_user_to_target(self,user,target):
+        conversation_directory = self.get_conversation_directory_name(user,target)
+        if not(self._conversation_exists(conversation_directory)):
+            os.makedirs(os.path.join(conversation_directory))
+            self.initialize_key_share(user,conversation_directory)
+        else:
+            key = self._check_for_pre_keys(conversation_directory,target)
+            if key is not None:
+                return key
+            else:
+                key = self._check_for_selected_pre_key(conversation_directory,target)
+                if key is not None:
+                    return key
+                    
+
+            
+
+
+
+    def send_message(self,user,message:str,target:str) -> False:
+        pass
+            
         #else use ratchet
+
+    def initialize_conversation(self,user,target:str,conversation_directory:str):
+        self.initialize_key_share(user,conversation_directory)
 
     def get_conversation_directory_name(self,user,target:str) -> str:
         conversation_directory = self._server_directory_path

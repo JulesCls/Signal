@@ -1,6 +1,6 @@
 import random,json,os,secrets
 from server import Server
-from typing import Tuple,TypedDict
+from typing import Tuple,TypedDict,Dict,List
 from utils import expo_rapide
 from elgamal import Elgamal
 
@@ -8,6 +8,10 @@ from elgamal import Elgamal
 class idCouple(TypedDict):
     public : int
     private : int
+
+class preKeysDict(TypedDict):
+    target:str
+    keys:List[Tuple[int,int]]
     
 
 class User:
@@ -15,9 +19,10 @@ class User:
     _id:idCouple #public/private id
     _server:Server = Server()
     _master_key = None
-    _pre_keys_list = []
+    _pre_keys_list:preKeysDict
     _sig_pk:idCouple
     _user_directory:str = None
+    _current_target:str = None
 
 
     def __init__(self,_name:str) -> None:
@@ -48,9 +53,7 @@ class User:
                 f.write(json.dumps({"public_id" : self._id["public"]}))
 
     def load_saved_info(self) -> bool:
-        
         directory = self._user_directory
-        print(os.path.exists(directory))
         if not(os.path.exists(directory)):
             return False
         directory+= "/.priv"
@@ -86,7 +89,7 @@ class User:
         if os.path.exists(directory):
             with open(directory,"r") as f:
                 return json.loads(f.read())
-        return []
+        return {}
 
 
     def _save_pre_keys(self):
@@ -94,13 +97,17 @@ class User:
         with open(directory,"w") as f:
             f.write(json.dumps(self._pre_keys_list))
 
+    def connect_to_conversation(self,target:str):
+        self._current_target = target
+        print(self._server.connect_user_to_target(self,target))
+
 
     def generate_pre_keys(self):
         new_pre_keys = []
         for _ in range(4):
             private_pre_key = secrets.randbelow(self._server.get_public_prime()-2)
             new_pre_keys.append((private_pre_key,expo_rapide(self._server.get_public_generator(),private_pre_key,self._server.get_public_prime())))
-        self._pre_keys_list.append(new_pre_keys)
+        self._pre_keys_list[self._current_target] = new_pre_keys
         self._save_pre_keys()
         return new_pre_keys
 
