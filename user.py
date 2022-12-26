@@ -2,52 +2,110 @@ import random,json,os,secrets
 from server import Server
 from typing import Tuple,TypedDict
 from utils import expo_rapide
+from elgamal import Elgamal
 
 
 class idCouple(TypedDict):
     public : int
     private : int
+    
 
 class User:
-    name:str = ""
-    id:idCouple #public/private id
-    server:Server = Server()
+    _name:str = ""
+    _id:idCouple #public/private id
+    _server:Server = Server()
+    _master_key = None
+    _pre_keys_list = []
+    _sig_pk:idCouple
+    _user_directory:str = None
 
 
-    def __init__(self,name:str) -> None:
-        self.name = name
-        self.id = {"public": None, "private" : None}
+    def __init__(self,_name:str) -> None:
+        self._pre_keys_list = list()
+        self._name = _name
+        self._user_directory = os.path.abspath(os.path.join(os.path.dirname(__file__),self._name))
+        self._id = {"public": None, "private" : None}
         if not(self.load_saved_info()):
-            self.id["public"] = secrets.randbelow(self.server.get_public_prime())
-            self.write_public_info()
-        self.id["private"] = expo_rapide(self.server.get_public_generator(),self.id["public"],self.server.get_public_prime())
+            self._id["private"] = secrets.randbelow(self._server.get_public_prime()-2)
+            self._id["public"] = expo_rapide(self._server.get_public_generator(),self._id["private"],self._server.get_public_prime())
+            self._sig_pk = {"public": None, "private" : None}
+            # self._sig_pk["private"] = secrets.randbelow(self._server.get_public_prime()-2)
+            # self._sig_pk["public"] = expo_rapide(self._server.get_public_generator(),self._sig_pk["private"],self._server.get_public_prime())
+            self.write_info()
+        self._pre_keys_list = self._load_pre_keys()
 
-    def write_public_info(self):
-        directory = self.name.lower()
+    def write_info(self): #write public/private couple into user_name/.priv file to load it later
+        directory = self._user_directory
         if not(os.path.exists(directory)):
             os.mkdir(directory)
-        directory+= "/.pub"
+        directory+= "/.priv"
         if not(os.path.exists(directory)):
             with open(directory,"w") as f:
-                f.write(json.dumps({"public_id" : self.id["public"]}))
+                f.write(json.dumps(self._id))
+        directory = self._user_directory + "/.pub"  #write public key into user_name/.pub file to use it in next steos by servor
+        if not(os.path.exists(directory)):
+            with open(directory,"w") as f:
+                f.write(json.dumps({"public_id" : self._id["public"]}))
 
     def load_saved_info(self) -> bool:
-        directory = self.name.lower()
+        
+        directory = self._user_directory
+        print(os.path.exists(directory))
         if not(os.path.exists(directory)):
             return False
-        directory+= "/.pub"
+        directory+= "/.priv"
         if not(os.path.exists(directory)):
             return False
         with open(directory,"r") as f:
-            data = json.loads(f.read())
-            self.id["public"] = data["public_id"]
+            self._id = json.loads(f.read())
         return True
 
     def get_public_id(self)-> int:
-        return self.id["public"]
+        return self._id["public"]
 
-if __name__ == "__main__":
-    alice = User("Alice")
+    def get_name(self) -> str:
+        return self._name
 
-    bob = User("Bobe")
-    print(bob.get_public_id() == alice.get_public_id())
+    
+    def send_message(self,message:str,target:str) -> bool:
+        self._server.send_message(self,message,target)
+
+    def get_initialization_keys_x3dh(self) -> dict:
+        elgamal = Elgamal()
+        return {
+            "ID": self._id["public"],
+            # "SigPK": self._sig_pk["public"],
+            # "Sig(SigPk;ID)" : elgamal.sign(str(self._sig_pk["public"]).encode(),self._id["private"]),
+            "SigPK": self._id["public"], # need to change for daily change
+            "Sig(SigPk;ID)" : elgamal.sign(str(self._id["public"]).encode(),self._id["private"]),
+            "OtPK": [public for _,public in self.generate_pre_keys()]
+        }
+
+    def _load_pre_keys(self):
+        directory = os.path.join(self._user_directory,"./otpk")
+        if os.path.exists(directory):
+            with open(directory,"r") as f:
+                return json.loads(f.read())
+        return []
+
+
+    def _save_pre_keys(self):
+        directory = os.path.join(self._user_directory,"./otpk")
+        with open(directory,"w") as f:
+            f.write(json.dumps(self._pre_keys_list))
+
+
+    def generate_pre_keys(self):
+        new_pre_keys = []
+        for _ in range(4):
+            private_pre_key = secrets.randbelow(self._server.get_public_prime()-2)
+            new_pre_keys.append((private_pre_key,expo_rapide(self._server.get_public_generator(),private_pre_key,self._server.get_public_prime())))
+        self._pre_keys_list.append(new_pre_keys)
+        self._save_pre_keys()
+        return new_pre_keys
+
+# if __name__ == "__main__":
+#     alice = User("Alice")
+#     bob = User("Bob")
+#     print(json.dumps(alice.get_initialization_keys_x3dh()))
+#     alice.send_message("hello","bob")

@@ -1,4 +1,4 @@
-import json, utils
+import json, utils, os
 from typing import Tuple
 
 class Server:
@@ -6,6 +6,8 @@ class Server:
     _public_prime = None
     _public_generator = None
     _numbers_in_cache = False
+    _server_directory_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"server"))
+
 
     _public_info_storage = "pub.txt"
 
@@ -48,19 +50,35 @@ class Server:
             f.write(json.dumps(p_g))
         print("Generation done.")
 
+    def send_message(self,user,message:str,target:str) -> None:
+        conversation_directory = self.get_conversation_directory_name(user,target)
+        if os.path.exists(conversation_directory):
+            pass
+        else:
+            #need to init conversation with x3dh
+            os.makedirs(os.path.join(self._server_directory_path, user.get_name() +"-"+ target))
+            self.initialize_key_share(user,conversation_directory)
+
+        #else use ratchet
+
+    def get_conversation_directory_name(self,user,target:str) -> str:
+        conversation_directory = self._server_directory_path
+        username = user.get_name()
+        if username > target:
+            conversation_directory =  os.path.join(conversation_directory, target +"-"+ username)
+        else:
+            conversation_directory =  os.path.join(conversation_directory, username +"-"+ target)
+        return conversation_directory
+
+    def initialize_key_share(self,user,conversation_directory:str) -> None:
+        with open(os.path.join(conversation_directory,user.get_name() + ".keys") ,"w") as f:
+            f.write(json.dumps(user.get_initialization_keys_x3dh()))
+
+            
 
 
 
-if __name__ == "__main__":
-    s1 = Server()
-    s2 = Server()
-    s1.generate_new_public_numbers()
 
-    print(s1 == s2)
-    p_g_as_dict = s1.get_public_prime_and_generator_as_dict()
-    print(p_g_as_dict) # retrieve public P
-    p,g = s2.get_public_prime_and_generator_as_tuple()
-    print(f"Prime number: {p}")
-    print(f"Generator element: {g}")
+
     
 
