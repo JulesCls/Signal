@@ -1,6 +1,5 @@
 from server import Server
 import secrets
-from user import User
 from utils import expo_rapide, inverse
 from sha256 import SHA256
 import math
@@ -14,6 +13,7 @@ class Elgamal():
     #     secretKey = secrets.randbelow(self._p-1) #user.getPrivateID()
     #     publicKey = expo_rapide(self._g,secretKey,self._p) #user.getPublicID
     #     return (publicKey,secretKey)
+    
 
     def sign(self,message:bytes,private_key:int):
         y = self._generate_y()
@@ -22,9 +22,9 @@ class Elgamal():
         s2 = ((self._hash_to_int(message) - private_key * s1) * y_inv) % (self._p -1)
         return (s1,s2)
 
-    def verify(self,message:bytes,r:int,s:int,public_key:int)->bool:
+    def verify(self,message:bytes,s1:int,s2:int,public_key:int)->bool:
         message_value = expo_rapide(self._g,self._hash_to_int(message),self._p)
-        verify_value = (expo_rapide(public_key,r,self._p) * expo_rapide(r,s,self._p)) % self._p
+        verify_value = (expo_rapide(public_key,s1,self._p) * expo_rapide(s1,s2,self._p)) % self._p
         # verify_value = (pow(public_key,r) * pow(r,s)) % self._p
         return message_value == verify_value
 
@@ -36,9 +36,3 @@ class Elgamal():
 
     def _hash_to_int(self,data:bytes)->int:
         return int.from_bytes(self.sha.digest(data),"big")
-if __name__ == "__main__":
-    elg = Elgamal()
-    alice = User("Alice")
-    message = b"salut"
-    r,s = elg.sign(message,alice._id["private"])
-    print(elg.verify(message,r,s,alice._id["public"]))
