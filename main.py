@@ -8,7 +8,7 @@ if __name__ == "__main__":
     alice = User("Alice")
     bob = User("Bob")
     
-    alice.connect_to_conversation(bob.get_name())
-    bob.connect_to_conversation(alice.get_name())
+    alice.connect_to_server()
+    bob.connect_to_server()
 
     # alice.send_message("salut","bob")

@@ -52,14 +52,28 @@ class Server:
 
 
 
-    def check_public_info_of_user(self,user):
-        file = os.path.join(self._server_directory_path,user.get_name()+".pub"),
+    def check_public_info_of_user(self,username):
+        file = os.path.join(self._server_directory_path,username+".pub")
         if os.path.exists(file):
             with open(file,"r") as f:
                     return json.loads(f.read())
-                
+        return None
+        
+    def publish_user_info(self,user):
+        file = os.path.join(self._server_directory_path,user.get_name()+".pub")
+        with open(file,"w") as f:
+            f.write(json.dumps(user.share_info_to_server()))
 
+    def update_user_info(self,user):
+        data = self.check_public_info_of_user(user.get_name())
+        if user.share_info_to_server() != data:
+            self.publish_user_info(user)
+        
 
+    def connect_user(self,user):
+        self.update_user_info(user)
+
+   
 
     ##to rework
 

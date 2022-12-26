@@ -17,7 +17,7 @@ class User:
     _server:Server = Server()
     _master_key = None
     _pre_keys_list:List[int]
-    _sig_pk:idCouple
+    _pk:idCouple
     _user_directory:str = None
     _current_target:str = None
 
@@ -30,11 +30,12 @@ class User:
         if not(self.load_saved_info()):
             self._id["private"] = secrets.randbelow(self._server.get_public_prime()-2)
             self._id["public"] = expo_rapide(self._server.get_public_generator(),self._id["private"],self._server.get_public_prime())
-            self._sig_pk = {"public": None, "private" : None}
-            # self._sig_pk["private"] = secrets.randbelow(self._server.get_public_prime()-2)
-            # self._sig_pk["public"] = expo_rapide(self._server.get_public_generator(),self._sig_pk["private"],self._server.get_public_prime())
+            self._pk = {"public": None, "private" : None}
+            self._pk["private"] = secrets.randbelow(self._server.get_public_prime()-2)
+            self._pk["public"] = expo_rapide(self._server.get_public_generator(),self._pk["private"],self._server.get_public_prime())
             self.write_info()
         self._pre_keys_list = self._load_pre_keys()
+
 
     def write_info(self): #write public/private couple into user_name/.priv file to load it later
         directory = self._user_directory
@@ -43,7 +44,7 @@ class User:
         directory+= "/.priv"
         if not(os.path.exists(directory)):
             with open(directory,"w") as f:
-                f.write(json.dumps(self._id))
+                f.write(json.dumps({"id":self._id,"pk":self._pk}))
         directory = self._user_directory + "/.pub"  #write public key into user_name/.pub file to use it in next steos by servor
         if not(os.path.exists(directory)):
             with open(directory,"w") as f:
@@ -57,7 +58,9 @@ class User:
         if not(os.path.exists(directory)):
             return False
         with open(directory,"r") as f:
-            self._id = json.loads(f.read())
+            data = json.loads(f.read())
+            self._id = data["id"]
+            self._pk = data["pk"]
         return True
 
     def get_public_id(self)-> int:
@@ -66,31 +69,28 @@ class User:
     def get_name(self) -> str:
         return self._name
 
+
+    def connect_to_server(self):
+        self._server.connect_user(self)
+
+    def share_info_to_server(self):
+        elgamal = Elgamal()
+        return {
+            "ID": self._id["public"],
+            "SigPK": self._pk["public"],
+            "Signature" : elgamal.sign(self._pk["public"].to_bytes(256,"big"),self._id["private"]),
+            "OtPK": [public for _,public in self.generate_pre_keys()]
+        }
     
     def send_message(self,message:str,target:str) -> bool:
         self._server.send_message(self,message,target)
 
-    def get_initialization_keys_x3dh(self) -> dict:
-        elgamal = Elgamal()
-        return {
-            "ID": self._id["public"],
-            # "SigPK": self._sig_pk["public"],
-            # "Sig(SigPk;ID)" : elgamal.sign(str(self._sig_pk["public"]).encode(),self._id["private"]),
-            "SigPK": self._id["public"], # need to change for daily change
-            "Sig(SigPk;ID)" : elgamal.sign(str(self._id["public"]).encode(),self._id["private"]),
-            "OtPK": [public for _,public in self.generate_pre_keys()]
-        }
 
     def generate_sig(self):
         elgamal = Elgamal()
         self._pk_pub = secrets.randbelow(self._server.get_public_prime()-2)
         self._pk_secret = expo_rapide(self._server.get_public_generator(),self._pk_pub,self._server.get_public_prime())
         return [self._id["public"],self._pk_pub,elgamal.sign(self._pk_pub.to_bytes(256,"big"),self._id["private"])]
-
-
-
-    def connect_to_server(self) -> bool:
-        pass
 
     #connect to server
         #ask server if it has data 
@@ -107,7 +107,7 @@ class User:
         if os.path.exists(directory):
             with open(directory,"r") as f:
                 return json.loads(f.read())
-        return {}
+        return []
 
 
     def _save_pre_keys(self):
@@ -131,6 +131,6 @@ class User:
 
 if __name__ == "__main__":
     alice = User("Alice")
-    data = alice.generate_sig()
-    elgamal = Elgamal()
-    print(elgamal.verify(data[1].to_bytes(256,"big"),*data[2],data[0]))
+    # data = alice.generate_sig()
+    # elgamal = Elgamal()
+    # print(elgamal.verify(data[1].to_bytes(256,"big"),*data[2],data[0]))
