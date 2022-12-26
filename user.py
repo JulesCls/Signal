@@ -9,9 +9,6 @@ class idCouple(TypedDict):
     public : int
     private : int
 
-class preKeysDict(TypedDict):
-    target:str
-    keys:List[Tuple[int,int]]
     
 
 class User:
@@ -19,7 +16,7 @@ class User:
     _id:idCouple #public/private id
     _server:Server = Server()
     _master_key = None
-    _pre_keys_list:preKeysDict
+    _pre_keys_list:List[int]
     _sig_pk:idCouple
     _user_directory:str = None
     _current_target:str = None
@@ -84,6 +81,27 @@ class User:
             "OtPK": [public for _,public in self.generate_pre_keys()]
         }
 
+    def generate_sig(self):
+        elgamal = Elgamal()
+        self._pk_pub = secrets.randbelow(self._server.get_public_prime()-2)
+        self._pk_secret = expo_rapide(self._server.get_public_generator(),self._pk_pub,self._server.get_public_prime())
+        return [self._id["public"],self._pk_pub,elgamal.sign(self._pk_pub.to_bytes(256,"big"),self._id["private"])]
+
+
+
+    def connect_to_server(self) -> bool:
+        pass
+
+    #connect to server
+        #ask server if it has data 
+        #send if not
+
+    #connect to client je veux envoyer à truc
+        #check si on a un fichier name.key
+        #si oui récup données publiques target et calcul DH
+        #si non a nous de récup les data si elles existentes sinon en attente
+
+
     def _load_pre_keys(self):
         directory = os.path.join(self._user_directory,"./otpk")
         if os.path.exists(directory):
@@ -107,12 +125,12 @@ class User:
         for _ in range(4):
             private_pre_key = secrets.randbelow(self._server.get_public_prime()-2)
             new_pre_keys.append((private_pre_key,expo_rapide(self._server.get_public_generator(),private_pre_key,self._server.get_public_prime())))
-        self._pre_keys_list[self._current_target] = new_pre_keys
+        self._pre_keys_list += new_pre_keys
         self._save_pre_keys()
         return new_pre_keys
 
-# if __name__ == "__main__":
-#     alice = User("Alice")
-#     bob = User("Bob")
-#     print(json.dumps(alice.get_initialization_keys_x3dh()))
-#     alice.send_message("hello","bob")
+if __name__ == "__main__":
+    alice = User("Alice")
+    data = alice.generate_sig()
+    elgamal = Elgamal()
+    print(elgamal.verify(data[1].to_bytes(256,"big"),*data[2],data[0]))

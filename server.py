@@ -50,6 +50,20 @@ class Server:
             f.write(json.dumps(p_g))
         print("Generation done.")
 
+
+
+    def check_public_info_of_user(self,user):
+        file = os.path.join(self._server_directory_path,user.get_name()+".pub"),
+        if os.path.exists(file):
+            with open(file,"r") as f:
+                    return json.loads(f.read())
+                
+
+
+
+    ##to rework
+
+
     def _conversation_exists(self,conversation_directory) -> bool:
         return os.path.exists(conversation_directory)
            

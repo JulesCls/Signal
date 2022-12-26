@@ -36,9 +36,6 @@ def broadcast(msg):
     for client_socket in listOfClient:
         client_socket.send(msg.encode())
 
-# def unicast(msg, clientSocket):
-
-
 while True:
     cs, clientAddress = server.accept()
     print(f"{clientAddress} connected")
@@ -46,9 +43,7 @@ while True:
     t = Thread(target=listenForClient, args=(cs,))
     t.daemon = True
     t.start()
-
-    print(listOfClient)
-
+    
 for cs in listOfClient:
     cs.close()
 server.close()
