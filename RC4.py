@@ -32,7 +32,8 @@ class RC4:
 
 if __name__ == "__main__":
     print(ord("1"))
-    key = b"123456789"
+    key = 1234567891286189264389127409812749871264897612890471298487120948120984
+    key = key.to_bytes(256,"big")
     rc4 = RC4(key)
     plain_text = b"This is a secret message"
 

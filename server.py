@@ -6,6 +6,8 @@ from message import Message
 class user_messages(TypedDict):
     target:str
     messages:List[Message]
+
+
     
 
 class Server:
@@ -14,7 +16,7 @@ class Server:
     _public_generator = None
     _numbers_in_cache = False
     _server_directory_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"server"))
-    _server_messages:user_messages
+    _server_messages:user_messages = {}
 
 
     _public_info_storage = "pub.txt"
@@ -71,6 +73,10 @@ class Server:
             with open(file,"r") as f:
                     return json.loads(f.read())
         return None
+
+    def get_id_of_user(self,username):
+        return self.get_public_info_of_user(username)["id"]
+
         
     def publish_user_info(self,user):
         file = os.path.join(self._server_directory_path,user.get_name()+".json")
@@ -80,6 +86,9 @@ class Server:
     def update_user_info(self,user):
         data = self.get_public_info_of_user(user.get_name())
         if data is not None:
+            if len(data["otpk"]) < 5:
+                print("yo")
+                user.generate_otpk() #to continue tommorow
             if data["pk"] != user.share_info_to_server()["pk"]:
                 self.publish_user_info(user)
         else:
@@ -89,19 +98,55 @@ class Server:
     def connect_user(self,user):
         self.update_user_info(user)
 
+    def get_user_messages(self,user) -> List[Message]:
+        messages = self.read_messages_from_file()
+        name = user.get_name()
+        if name in messages.keys():
+            data = messages[name]
+            messages[name] = []
+            self.write_messages_to_file(messages)
+            return data
+        return []
 
-    def send_message(self,user,message:str,target:str) -> False:
-        pass
-            
-        #else use ratchet
-    def get_conversation_directory_name(self,user,target:str) -> str:
-        conversation_directory = self._server_directory_path
-        username = user.get_name()
-        if username > target:
-            conversation_directory =  os.path.join(conversation_directory, target +"-"+ username)
+    def send_message(self,message:Message) -> False:
+        messages = self.read_messages_from_file()
+        if message.get_recipient() in messages.keys():
+            messages[message.get_recipient()].append(message)
         else:
-            conversation_directory =  os.path.join(conversation_directory, username +"-"+ target)
-        return conversation_directory
+            messages[message.get_recipient()] = [message]
+        self.write_messages_to_file(messages)
+            
+
+
+    def write_messages_to_file(self,messages:user_messages):
+        file = os.path.join(self._server_directory_path,"messages.json")
+        with open(file,"w") as f:
+            f.write(json.dumps(messages))
+        
+    def read_messages_from_file(self)->user_messages:
+        server_messages = {}
+        file = os.path.join(self._server_directory_path,"messages.json")
+        if os.path.exists(file):
+            with open(file,"r") as f:
+                data = json.loads(f.read())
+                for user in data.keys():
+                    server_messages[user] = []
+                    for message in data[user]:
+                        server_messages[user].append(Message.load_json(json.dumps(message)))
+            return server_messages
+        else:
+            return {}
+
+
+
+    # def get_conversation_directory_name(self,user,target:str) -> str:
+    #     conversation_directory = self._server_directory_path
+    #     username = user.get_name()
+    #     if username > target:
+    #         conversation_directory =  os.path.join(conversation_directory, target +"-"+ username)
+    #     else:
+    #         conversation_directory =  os.path.join(conversation_directory, username +"-"+ target)
+    #     return conversation_directory
             
 
 
