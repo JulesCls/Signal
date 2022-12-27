@@ -10,6 +10,7 @@ class HMAC256:
             key += b'\x00' * (64 - len(key))
         elif len(key) > 64:
             key = sha256.digest(key)
+            key += b'\x00' * (64 - len(key))
 
         
         # Create array of byte from key
@@ -28,7 +29,7 @@ class HMAC256:
         return hmac_hash
 
     @staticmethod
-    def digest(key:bytearray,message:bytearray):
+    def digest(key:bytearray,message:bytearray)->bytes:
         return bytes.fromhex(HMAC256.hexdigest(key,message)) #return hash in bytes format
 
     @staticmethod

@@ -1,5 +1,12 @@
 import json, utils, os, random
-from typing import Tuple
+from typing import Tuple, List, TypedDict
+from message import Message
+
+
+class user_messages(TypedDict):
+    target:str
+    messages:List[Message]
+    
 
 class Server:
     _instance = None
@@ -7,6 +14,7 @@ class Server:
     _public_generator = None
     _numbers_in_cache = False
     _server_directory_path = os.path.abspath(os.path.join(os.path.dirname(__file__),"server"))
+    _server_messages:user_messages
 
 
     _public_info_storage = "pub.txt"
@@ -50,23 +58,31 @@ class Server:
             f.write(json.dumps(p_g))
         print("Generation done.")
 
+    def share_public_info_target_to_user(self,target:str):
+        data = self.get_public_info_of_user(target)
+        data["otpk"] = random.choice(data["otpk"])
+        return data
+        
 
 
-    def check_public_info_of_user(self,username):
-        file = os.path.join(self._server_directory_path,username+".pub")
+    def get_public_info_of_user(self,username):
+        file = os.path.join(self._server_directory_path,username+".json")
         if os.path.exists(file):
             with open(file,"r") as f:
                     return json.loads(f.read())
         return None
         
     def publish_user_info(self,user):
-        file = os.path.join(self._server_directory_path,user.get_name()+".pub")
+        file = os.path.join(self._server_directory_path,user.get_name()+".json")
         with open(file,"w") as f:
             f.write(json.dumps(user.share_info_to_server()))
 
     def update_user_info(self,user):
-        data = self.check_public_info_of_user(user.get_name())
-        if not data:
+        data = self.get_public_info_of_user(user.get_name())
+        if data is not None:
+            if data["pk"] != user.share_info_to_server()["pk"]:
+                self.publish_user_info(user)
+        else:
             self.publish_user_info(user)
         
 

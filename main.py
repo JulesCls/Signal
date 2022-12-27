@@ -10,5 +10,6 @@ if __name__ == "__main__":
     
     alice.connect_to_server()
     bob.connect_to_server()
+    alice.send_message("salut","bob")
 
     # alice.send_message("salut","bob")

@@ -100,13 +100,28 @@ def inverse(k, p):
     inverse = pow(k, -1, p)
     return inverse
 
+def concatenateSK(*numbers: int) -> bytes:
+    l = []
+    for x in numbers:
+        x = bytearray(x.to_bytes(256,'big'))
+        l.append(x)
+    return b''.join(l)
+    
+    
+
 if __name__ == "__main__":
-    p = 10
-    k = 3
-    print(inv_bezout(k,p))
-    print(inverse(k,p))
+    # p = 10
+    # k = 3
+    # print(inv_bezout(k,p))
+    # print(inverse(k,p))
     # n = 100
     # print(groupByBits(16,n))
+    
+    x = 1
+    y = 2
+    z = 3
+    a = 4
+    print(concatenateSK(x,y,z,a))
 
 
 
