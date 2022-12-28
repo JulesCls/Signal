@@ -62,12 +62,12 @@ class User:
             self._pk = data["pk"]
         return True
 
-    def connect_to_server(self):
+    def connect_to_target(self,target:str):
         self._sks = self._load_sk()
-        self.get_pending_messages()
+        self.get_pending_messages_from_target(target)
         self._server.connect_user(self)
     
-    def disconnect_from_server(self):
+    def disconnect_from_target(self):
         self._save_sk()
 
 
@@ -101,8 +101,8 @@ class User:
         self._server.send_message(message)
         self._ratchet_sk(target)
 
-    def get_pending_messages(self): #fecth messages from server
-        messages = self._server.get_user_messages(self)
+    def get_pending_messages_from_target(self,target:str): #fecth messages from server
+        messages = self._server.get_user_messages_from_target(self,target)
         if messages != []:
             messages.sort(key= lambda x: x.get_timestamp())
             for message in messages:

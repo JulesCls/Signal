@@ -107,12 +107,16 @@ class Server:
     def connect_user(self,user):
         self.update_user_info(user)
 
-    def get_user_messages(self,user) -> List[Message]:
+    def get_user_messages_from_target(self,user,target) -> List[Message]:
         messages = self.read_messages_from_file()
         name = user.get_name()
         if name in messages.keys():
-            data = messages[name]
-            messages[name] = []
+            data = []
+            for message in messages[name]:
+                if message.get_sender() == target:
+                    data.append(message)
+            for message in data:
+                messages[name].remove(message)
             self.write_messages_to_file(messages)
             return data
         return []

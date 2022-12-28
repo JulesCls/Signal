@@ -1,1 +1,1 @@
-{"bob": [], "alice": [], "aaa": [{"timestamp": "2022-12-28 10:57:01", "sk_data": null, "sender": "bob", "recipient": "aaa", "message": "O03aQAwIb31RJb14b6UqkzgE/ZXdp0AMGacMD0197geEQpzD"}]}
+{"alice": [], "bob": []}
