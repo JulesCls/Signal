@@ -86,6 +86,9 @@ class Message:
     def set_message(self,message:bytes):
         self._message = message
 
+    def clear_for_write(self):
+        self._sk_data = None
+
 
     def to_json(self):
         return {

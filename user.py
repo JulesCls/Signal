@@ -91,9 +91,12 @@ class User:
         self._pk["public"] = expo_rapide(self._server.get_public_generator(),self._pk["private"],self._server.get_public_prime())
         
     
-    def send_message(self,msg:str,target:str, is_file: bool) -> bool:
+    def send_message(self,msg:str,target:str, is_file:bool=False) -> bool:
+        self.get_pending_messages_from_target(target)
+        self._random_sk_reinitialization(target)
         if is_file == False:
             message =  Message(msg.encode(),self._name,target, None)
+            self._add_messages(message,sender=True)
             if target not in self._sks.values():
                     self._initalize_target_sk(target)
                     if self._sks[target] is None or None in self._sks[target].values():
@@ -105,10 +108,13 @@ class User:
             self._ratchet_sk(target)
         elif is_file == True:
             filepath = msg
+            if os.path.exists(filepath) == False:
+                raise Exception("Le fichier n'existe pas, veuillez réessayer.")
             f = open(filepath,'rb')
             data_file = f.read()
             f.close()
             message =  Message(data_file,self._name,target, filepath)
+            self._add_messages(message,sender=True)
             if target not in self._sks.values():
                     self._initalize_target_sk(target)
                     if self._sks[target] is None or None in self._sks[target].values():
@@ -130,25 +136,28 @@ class User:
                         self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
                     rc4 = RC4(self._sks[message.get_sender()]["message_key"])
                     clear_message = rc4.decrypt(message.get_message())
+                    message.set_message(clear_message)
+                    self._add_messages(message)
                     self._ratchet_sk(message.get_sender())
-                    print(f"[{message.get_timestamp}] {message.get_sender()}: {clear_message.decode()}")
+                    # print(f"[{message.get_timestamp}] {message.get_sender()}: {clear_message.decode()}")
                 if message.get_filepath() != None:
                     if message.get_sk_data():
                         self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
                     aes = AES()
                     file_content = aes.decryption(message.get_message(),int.from_bytes(self._sks[message.get_sender()]["message_key"],'big'),'CBC')
                     self._ratchet_sk(message.get_sender())
-                    if os.path.exists(os.path.join(self._user_directory,'files')):
-                        file = open(os.path.join(self._user_directory,'files',os.path.basename(message.get_filepath())), "wb")
-                        file.write(file_content)
-                        file.close()
-                        print(f"[{message.get_timestamp()}] {message.get_sender()} vous a envoyé un fichier")
-                    else:
+                    if not(os.path.exists(os.path.join(self._user_directory,'files'))):
                         os.mkdir(os.path.join(self._user_directory,'files'))
-                        file = open(os.path.join(self._user_directory,'files',os.path.basename(message.get_filepath())), "wb")
-                        file.write(file_content)
-                        file.close()
-                        print(f"[{message.get_timestamp()}] {message.get_sender()} vous a envoyé un fichier")
+                    file = open(os.path.join(self._user_directory,'files',os.path.basename(message.get_filepath())), "wb")
+                    file.write(file_content)
+                    file.close()
+                    self._add_messages(message)
+                        # print(f"[{message.get_timestamp()}] {message.get_sender()} vous a envoyé un fichier")
+ 
+    def _random_sk_reinitialization(self,target):
+        x = random.randint(0,5)
+        if x == 0:
+            self._sks[target] = None
 
     def _initialize_sk(self,target) -> SK_DATA:
         kdf = HMAC256()
@@ -167,7 +176,6 @@ class User:
         return {"otpk":target_data["otpk"],"ephemeral":ephemeral_key_public,"signature":elgamal.sign(ephemeral_key_public.to_bytes(256,"big"),self._id["private"])}
 
     def _calculate_sk_from_received_data(self,received_data:SK_DATA,sender:str):
-        print(received_data)
         kdf = HMAC256()
         target_id = self._server.get_id_of_user(sender)
         elgamal = Elgamal()
@@ -247,6 +255,43 @@ class User:
         otpk_list+= new_pre_keys
         self._save_otpk(otpk_list)
         return otpk_list
+
+    def _add_messages(self,message:Message,sender=False):
+        message.clear_for_write()
+        target = message.get_sender()
+        if sender:
+            target = message.get_recipient()
+        talks = self._load_messages_from_target(target)
+        talks.append(message)
+        file = os.path.join(self._user_directory,"talks", target + ".json")
+        with open(file,"w") as f:
+            f.write(json.dumps(talks))
+
+    def print_target_conversation(self,target:str):
+        self.get_pending_messages_from_target(target)
+        messages = self._load_messages_from_target(target)
+        if messages == []:
+            print("Vous n'avez pas de messages.")
+        else:
+            for message in messages:
+                if message.get_filepath():
+                    print(f"[{message.get_timestamp()}] {message.get_sender()} a envoyé le fichier {os.path.basename(message.get_filepath())}")
+                else:
+                    print(f"[{message.get_timestamp()}] {message.get_sender()}: {message.get_message().decode()}")
+                    
+
+    def _load_messages_from_target(self,target) -> List[Message]:
+        messages:List[Message] = []
+        directory = os.path.join(self._user_directory,"talks")
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        file = os.path.join(directory, target + ".json")
+        if os.path.exists(file):
+            with open(file,"r") as f:
+                data = json.loads(f.read())
+                for message in data:
+                    messages.append(Message.load_json(json.dumps(message)))
+        return messages
 
     #getters
     def get_public_id(self)-> int:
