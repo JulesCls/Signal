@@ -94,16 +94,15 @@ class Server:
             f.write(json.dumps(user.share_info_to_server()))
 
     def update_user_info(self,user):
-        data = self.get_public_info_of_user(user.get_name())
-        if data is not None:
+        try:
+            data = self.get_public_info_of_user(user.get_name())
             if len(data["otpk"]) < 10:
                 user.generate_otpk()
                 self.publish_user_info(user)
             if data["pk"] != user.share_info_to_server()["pk"]:
                 self.publish_user_info(user)
-        else:
+        except:
             self.publish_user_info(user)
-        
 
     def connect_user(self,user):
         self.update_user_info(user)

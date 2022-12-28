@@ -31,15 +31,12 @@ class User:
 
     def __init__(self,_name:str) -> None:
         self._name = _name
-        self._sks = {}
         self._user_directory = os.path.abspath(os.path.join(os.path.dirname(__file__),self._name))
         self._id = {"public": None, "private" : None}
         if not(self.load_saved_info()):
             self._id["private"] = secrets.randbelow(self._server.get_public_prime()-2)
             self._id["public"] = expo_rapide(self._server.get_public_generator(),self._id["private"],self._server.get_public_prime())
-            self._pk = {"public": None, "private" : None}
-            self._pk["private"] = secrets.randbelow(self._server.get_public_prime()-2)
-            self._pk["public"] = expo_rapide(self._server.get_public_generator(),self._pk["private"],self._server.get_public_prime())
+            self.change_pk()
             self.write_info()
 
 
@@ -66,7 +63,12 @@ class User:
         return True
 
     def connect_to_server(self):
+        self._sks = self._load_sk()
+        self.get_pending_messages()
         self._server.connect_user(self)
+    
+    def disconnect_from_server(self):
+        self._save_sk()
 
 
     def share_info_to_server(self):
@@ -80,6 +82,12 @@ class User:
             "signature" : elgamal.sign(self._pk["public"].to_bytes(256,"big"),self._id["private"]),
             "otpk": [public for _,public in otpk_list]
         }
+
+    def change_pk(self):
+        self._pk = {"public": None, "private" : None}
+        self._pk["private"] = secrets.randbelow(self._server.get_public_prime()-2)
+        self._pk["public"] = expo_rapide(self._server.get_public_generator(),self._pk["private"],self._server.get_public_prime())
+        
     
     def send_message(self,message:str,target:str) -> bool:
         message =  Message(message.encode(),self._name,target)
@@ -104,6 +112,7 @@ class User:
                 clear_message = rc4.decrypt(message.get_message())
                 self._ratchet_sk(message.get_sender())
                 print(f"{message.get_sender():<10}{clear_message.decode()}")
+        
 
     def _initialize_sk(self,target) -> SK_DATA:
         kdf = HMAC256()
@@ -147,6 +156,19 @@ class User:
     def _initalize_target_sk(self,target):
         if target not in self._sks.keys() or self._sks[target] == None or  None in self._sks[target].values():
             self._sks[target] = {"message_key":None,"chain_key":None}
+
+    def _save_sk(self):
+        file = os.path.join(self._user_directory,"sk.json")
+        with open(file,"w") as f:
+            print(json.dumps(self._sks))
+            f.write(json.dumps(self._sks))
+
+    def _load_sk(self):
+        file = os.path.join(self._user_directory,"sk.json")
+        if os.path.exists(file):
+            with open(file,"r") as f:
+                return json.load(f)
+        return {}
 
     #used to load and save otpk keys
     def _load_otpk(self) -> List[Tuple[int,int]]:
