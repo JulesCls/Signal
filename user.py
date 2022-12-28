@@ -25,15 +25,12 @@ class User:
     _id:idCouple #public/private id
     _server:Server = Server()
     _sk:SK = None
-    _otpk_list:List[Tuple[int,int]]
     _pk:idCouple
     _user_directory:str = None
-    _current_target:str = None
 
 
 
     def __init__(self,_name:str) -> None:
-        self._otpk_list = list()
         self._name = _name
         self._sk =self._pk = {"chain_key": None, "message_key" : None}
         self._user_directory = os.path.abspath(os.path.join(os.path.dirname(__file__),self._name))
@@ -45,12 +42,9 @@ class User:
             self._pk["private"] = secrets.randbelow(self._server.get_public_prime()-2)
             self._pk["public"] = expo_rapide(self._server.get_public_generator(),self._pk["private"],self._server.get_public_prime())
             self.write_info()
-        self._otpk_list = self._load_otpk()
-        if self._otpk_list is None or self._otpk_list == []:
-            self.generate_otpk()
 
 
-    def write_info(self): #write public/private couple into user_name/.priv file to load it later
+    def write_info(self): #write public/private couple into user_name/.json file to load it later
         directory = self._user_directory
         if not(os.path.exists(directory)):
             os.mkdir(directory)
@@ -58,12 +52,8 @@ class User:
         if not(os.path.exists(directory)):
             with open(directory,"w") as f:
                 f.write(json.dumps({"id":self._id,"pk":self._pk}))
-        # directory = self._user_directory + "/.pub"  #write public key into user_name/.pub file to use it in next steos by servor
-        # if not(os.path.exists(directory)):
-        #     with open(directory,"w") as f:
-        #         f.write(json.dumps({"public_id" : self._id["public"]}))
 
-    def load_saved_info(self) -> bool:
+    def load_saved_info(self) -> bool: #load info from user_name/.json file
         directory = self._user_directory
         if not(os.path.exists(directory)):
             return False
@@ -76,24 +66,20 @@ class User:
             self._pk = data["pk"]
         return True
 
-    def get_public_id(self)-> int:
-        return self._id["public"]
-
-    def get_name(self) -> str:
-        return self._name
-
-
     def connect_to_server(self):
         self._server.connect_user(self)
 
 
     def share_info_to_server(self):
         elgamal = Elgamal()
+        otpk_list = self._load_otpk()
+        if otpk_list == []:
+            otpk_list = self.generate_otpk()
         return {
             "id": self._id["public"],
             "pk": self._pk["public"],
             "signature" : elgamal.sign(self._pk["public"].to_bytes(256,"big"),self._id["private"]),
-            "otpk": [public for _,public in self._otpk_list]
+            "otpk": [public for _,public in otpk_list]
         }
     
     def send_message(self,message:str,target:str) -> bool:
@@ -132,18 +118,12 @@ class User:
         dh1 = self._dh(self._pk["private"],target_id)
         dh2 = self._dh(self._id["private"],received_data["ephemeral"])
         dh3 = self._dh(self._pk["private"],received_data["ephemeral"])
-        dh4 = self._dh(self.retrieve_otpk_private(received_data["otpk"]),received_data["ephemeral"])
+        dh4 = self._dh(self._retrieve_otpk_private(received_data["otpk"]),received_data["ephemeral"])
         self._sk["message_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x01')
         self._sk["chain_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x02')
 
-    def retrieve_otpk_private(self,otpk_to_find:int):
-        for otpk in self._otpk_list:
-            private,public = otpk
-            if public == otpk_to_find:
-                return private
 
-
-    def get_pending_messages(self):
+    def get_pending_messages(self): #fecth messages from server
         messages = self._server.get_user_messages(self)
         if messages != []:
             messages.sort(key= lambda x: x.get_timestamp())
@@ -156,44 +136,60 @@ class User:
                 print(f"{message.get_sender():<10}{clear_message.decode()}")
 
         
-    def _ratchet_sk(self):
+    def _ratchet_sk(self): #ratchet sk
         kdf = HMAC256()
         if None not in self._sk.keys():
             self._sk["message_key"] = kdf.digest(self._sk["chain_key"],b'\x01')
             self._sk["chain_key"] = kdf.digest(self._sk["chain_key"],b'\x02')
             
 
-    def _dh(self,x1:int,x2:int):
+    def _dh(self,x1:int,x2:int): #used to calculate shared key
         return expo_rapide(x2,x1,self._server.get_public_prime())
 
     #used to load and save otpk keys
-    def _load_otpk(self):
+    def _load_otpk(self) -> List[Tuple[int,int]]:
         directory = os.path.join(self._user_directory,"./otpk.json")
         if os.path.exists(directory):
             with open(directory,"r") as f:
                 return json.loads(f.read())
-        return self.generate_otpk()
+        return []
 
-
-    def _save_otpk(self):
+    def _save_otpk(self,otpk_list:List[Tuple[int,int]]):
         directory = os.path.join(self._user_directory,"./otpk.json")
         with open(directory,"w") as f:
-            f.write(json.dumps(self._otpk_list))
+            f.write(json.dumps(otpk_list))
+
+    def _retrieve_otpk_private(self,otpk_to_find:int):
+        for otpk in self._load_otpk():
+            private,public = otpk
+            if public == otpk_to_find:
+                self._remove_otpk((private,public))
+                return private
+
+    def _remove_otpk(self,otpk_tuple:Tuple[int,int]):
+        otpk_list = self._load_otpk()
+        for otpk in otpk_list:
+            priv, pub = otpk
+            if priv == otpk_tuple[0] and pub == otpk_tuple[1]:
+                otpk_list.remove(otpk)
+                break
+        self._save_otpk(otpk_list)
 
     #generate 4 one-time pre-keys 
-    def generate_otpk(self):
+    def generate_otpk(self) -> List[Tuple[int,int]]:
+        otpk_list = self._load_otpk()
+
         new_pre_keys = []
-        for _ in range(4):
+        for _ in range(20):
             private_pre_key = secrets.randbelow(self._server.get_public_prime()-2)
             new_pre_keys.append((private_pre_key,expo_rapide(self._server.get_public_generator(),private_pre_key,self._server.get_public_prime())))
-        self._otpk_list += new_pre_keys
-        self._save_otpk()
-        return new_pre_keys
+        otpk_list+= new_pre_keys
+        self._save_otpk(otpk_list)
+        return otpk_list
 
-    
+    #getters
+    def get_public_id(self)-> int:
+        return self._id["public"]
 
-if __name__ == "__main__":
-    alice = User("Alice")
-    # data = alice.generate_sig()
-    # elgamal = Elgamal()
-    # print(elgamal.verify(data[1].to_bytes(256,"big"),*data[2],data[0]))
+    def get_name(self) -> str:
+        return self._name   

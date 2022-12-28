@@ -19,7 +19,7 @@ class Server:
     _server_messages:user_messages = {}
 
 
-    _public_info_storage = "pub.txt"
+    _public_info_storage = "pub.json"
 
     def __new__(cls):
         if not cls._instance:
@@ -46,7 +46,7 @@ class Server:
         if self._numbers_in_cache:
             return
         self._numbers_in_cache = True
-        with open(self._public_info_storage,"r") as f:
+        with open(os.path.join(self._server_directory_path,self._public_info_storage),"r") as f:
             data = json.loads(f.read())
             self._public_prime = data["prime_number"]
             self._public_generator = data["generator_element"]
@@ -54,7 +54,7 @@ class Server:
             raise Exception("Le nom de fichier contenant les nombres publics du démarrage sont incorrectes ou bien le format n'est pas respecté.")
         
 
-    def generate_new_public_numbers(self):
+    def _generate_new_public_numbers(self):
         p_g = utils.get_number_with_generator_element()
         with open(self._public_info_storage,"w") as f:
             f.write(json.dumps(p_g))
@@ -62,9 +62,20 @@ class Server:
 
     def share_public_info_target_to_user(self,target:str):
         data = self.get_public_info_of_user(target)
-        data["otpk"] = random.choice(data["otpk"])
+        otpk = random.choice(data["otpk"])
+        data["otpk"] = otpk
+        self._remove_otpk_stored_from_target(target,otpk)
         return data
-        
+
+    def _remove_otpk_stored_from_target(self,target:str,otpk:int):
+        print(target)
+        file = os.path.join(self._server_directory_path,target+".json")
+        data = None
+        with open(file,"r") as f:
+            data = json.loads(f.read())
+        data["otpk"].remove(otpk)
+        with open(file,'w') as f:
+            f.write(json.dumps(data))
 
 
     def get_public_info_of_user(self,username):
@@ -72,7 +83,7 @@ class Server:
         if os.path.exists(file):
             with open(file,"r") as f:
                     return json.loads(f.read())
-        return None
+        raise Exception("Utilisateur introuvable.")
 
     def get_id_of_user(self,username):
         return self.get_public_info_of_user(username)["id"]
@@ -86,9 +97,9 @@ class Server:
     def update_user_info(self,user):
         data = self.get_public_info_of_user(user.get_name())
         if data is not None:
-            if len(data["otpk"]) < 5:
-                print("yo")
-                user.generate_otpk() #to continue tommorow
+            if len(data["otpk"]) < 10:
+                user.generate_otpk()
+                self.publish_user_info(user)
             if data["pk"] != user.share_info_to_server()["pk"]:
                 self.publish_user_info(user)
         else:
