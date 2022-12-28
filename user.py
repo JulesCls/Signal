@@ -6,6 +6,8 @@ from elgamal import Elgamal
 from HMAC256 import HMAC256
 from message import SK_DATA, Message
 from RC4 import RC4
+from pathlib import Path
+from AES import AES
 
 
 
@@ -89,30 +91,64 @@ class User:
         self._pk["public"] = expo_rapide(self._server.get_public_generator(),self._pk["private"],self._server.get_public_prime())
         
     
-    def send_message(self,message:str,target:str) -> bool:
-        message =  Message(message.encode(),self._name,target)
-        if target not in self._sks.values():
-                self._initalize_target_sk(target)
-                if self._sks[target] is None or None in self._sks[target].values():
-                    sk_pub_data:SK_DATA = self._initialize_sk(target)
-                    message.set_sk_data(sk_pub_data)
-        rc4 = RC4(self._sks[target]["message_key"])
-        message.set_message(rc4.encrypt(message.get_message()))
-        self._server.send_message(message)
-        self._ratchet_sk(target)
+    def send_message(self,msg:str,target:str, is_file: bool) -> bool:
+        if is_file == False:
+            message =  Message(msg.encode(),self._name,target, None)
+            if target not in self._sks.values():
+                    self._initalize_target_sk(target)
+                    if self._sks[target] is None or None in self._sks[target].values():
+                        sk_pub_data:SK_DATA = self._initialize_sk(target)
+                        message.set_sk_data(sk_pub_data)
+            rc4 = RC4(self._sks[target]["message_key"])
+            message.set_message(rc4.encrypt(message.get_message()))
+            self._server.send_message(message)
+            self._ratchet_sk(target)
+        elif is_file == True:
+            filepath = msg
+            f = open(filepath,'rb')
+            data_file = f.read()
+            f.close()
+            message =  Message(data_file,self._name,target, filepath)
+            if target not in self._sks.values():
+                    self._initalize_target_sk(target)
+                    if self._sks[target] is None or None in self._sks[target].values():
+                        sk_pub_data:SK_DATA = self._initialize_sk(target)
+                        message.set_sk_data(sk_pub_data)
+            aes = AES()
+            message.set_message(aes.encryption(message.get_message(),int.from_bytes(self._sks[target]["message_key"],'big'),'CBC'))
+            self._server.send_message(message)
+            self._ratchet_sk(target)
+            
 
     def get_pending_messages_from_target(self,target:str): #fecth messages from server
         messages = self._server.get_user_messages_from_target(self,target)
         if messages != []:
             messages.sort(key= lambda x: x.get_timestamp())
             for message in messages:
-                if message.get_sk_data():
-                    self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
-                rc4 = RC4(self._sks[message.get_sender()]["message_key"])
-                clear_message = rc4.decrypt(message.get_message())
-                self._ratchet_sk(message.get_sender())
-                print(f"{message.get_sender():<10}{clear_message.decode()}")
-        
+                if message.get_filepath() == None:
+                    if message.get_sk_data():
+                        self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
+                    rc4 = RC4(self._sks[message.get_sender()]["message_key"])
+                    clear_message = rc4.decrypt(message.get_message())
+                    self._ratchet_sk(message.get_sender())
+                    print(f"[{message.get_timestamp}] {message.get_sender()}: {clear_message.decode()}")
+                if message.get_filepath() != None:
+                    if message.get_sk_data():
+                        self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
+                    aes = AES()
+                    file_content = aes.decryption(message.get_message(),int.from_bytes(self._sks[message.get_sender()]["message_key"],'big'),'CBC')
+                    self._ratchet_sk(message.get_sender())
+                    if os.path.exists(os.path.join(self._user_directory,'files')):
+                        file = open(os.path.join(self._user_directory,'files',os.path.basename(message.get_filepath())), "wb")
+                        file.write(file_content)
+                        file.close()
+                        print(f"[{message.get_timestamp()}] {message.get_sender()} vous a envoyé un fichier")
+                    else:
+                        os.mkdir(os.path.join(self._user_directory,'files'))
+                        file = open(os.path.join(self._user_directory,'files',os.path.basename(message.get_filepath())), "wb")
+                        file.write(file_content)
+                        file.close()
+                        print(f"[{message.get_timestamp()}] {message.get_sender()} vous a envoyé un fichier")
 
     def _initialize_sk(self,target) -> SK_DATA:
         kdf = HMAC256()
@@ -131,6 +167,7 @@ class User:
         return {"otpk":target_data["otpk"],"ephemeral":ephemeral_key_public,"signature":elgamal.sign(ephemeral_key_public.to_bytes(256,"big"),self._id["private"])}
 
     def _calculate_sk_from_received_data(self,received_data:SK_DATA,sender:str):
+        print(received_data)
         kdf = HMAC256()
         target_id = self._server.get_id_of_user(sender)
         elgamal = Elgamal()

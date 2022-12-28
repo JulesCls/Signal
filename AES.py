@@ -1,5 +1,3 @@
-import random,sys
-
 class AES():
     
     S_BOX =[0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
@@ -69,6 +67,7 @@ class AES():
             blocks.append(block)
         return blocks
 
+    #create a matrix of 4x4 bytes using the 16 bytes datas block in input
     def stateInit(self, block: bytes):
         block = bytearray(block)
         state = [[],[],[],[]]
@@ -77,7 +76,8 @@ class AES():
             for j in range(4):
                 state[i].append(block[j+4*i].to_bytes(1,'big'))
         return state
-
+    
+    #convert a state matric into a 16 bytes block
     def state_to_block(self, state: list[list[bytearray]]) -> bytes:
         block = b''
         for i in state:
@@ -225,6 +225,7 @@ class AES():
                 a ^= 0x11b
         return p & 0xff
 
+    #perform a matrix multiplication of a column of the state by the below given matrix c
     def mixColumn(self, state: list[bytearray]) -> list[bytearray]:
         c = [[0x02, 0x03, 0x01, 0x01],
             [0x01, 0x02, 0x03, 0x01],
@@ -234,16 +235,17 @@ class AES():
         for row in c:
             res.append((self.gmul(row[0],state[0]) ^ self.gmul(row[1],state[1]) ^ self.gmul(row[2],state[2]) ^ self.gmul(row[3],state[3])).to_bytes(1,'big'))
         return res
-
+    
+    #multiply each colum of state by the matrix c and make the final 4x4 state
     def mixColumns(self, state: list[list[bytearray]]) -> list[list[bytearray]]:
         state = self.transposeState(state)
         i = 0
         for line in state:
             state[i] = self.mixColumn(line)
             i += 1
-        # res = transposeState(state)    
-        return state
-
+        res = self.transposeState(state)    
+        return res
+    #perform a matrix multiplication of a column of the state by the below given inverse matrix c
     def invMixColumn(self, state: list[bytearray]) -> list[bytearray]:
         c = [[0x0e, 0x0b, 0x0d, 0x09],
             [0x09, 0x0e, 0x0b, 0x0d],
@@ -254,8 +256,9 @@ class AES():
             res.append((self.gmul(row[0],state[0]) ^ self.gmul(row[1],state[1]) ^ self.gmul(row[2],state[2]) ^ self.gmul(row[3],state[3])).to_bytes(1,'big'))
         return res
 
+    #multiply each colum of state by the inverse matrix c and make the final 4x4 state
     def invMixColumns(self, state: list[list[bytearray]]) -> list[list[bytearray]]:
-        # state = transposeState(state)
+        state = self.transposeState(state)
         i = 0
         for line in state:
             state[i] = self.invMixColumn(line)
@@ -311,7 +314,8 @@ class AES():
         state = self.addRoundKey(state,rounds_keys[0])
         return self.state_to_block(state)
 
-    def encryption(self, data: bytes, key: int, mode: str, initialVector: bytes = b'\x00') -> bytes:
+    #encryption of datas using ECB mode or CBC mode
+    def encryption(self, data: bytes, key: int, mode: str, initialVector: bytes = b'\xfd\xdf\xe2i_`\xdcJ\x028\xd1\x8b\x80C]\x89') -> bytes:
         if mode == 'ECB':
             blocks = self.getBlocks(data)
             for block in blocks:
@@ -326,7 +330,8 @@ class AES():
                 output.append(self.blockEncryption((int.from_bytes(blocks[i],'big') ^ int.from_bytes(output[i-1],'big')).to_bytes(16,'big'), key))
             return b''.join(output)
 
-    def decryption(self, cypher: bytes, key: int, mode: str, initialVector: bytes = b'\x00') -> bytes:
+    #decryption of datas using ECB mode or CBC mode
+    def decryption(self, cypher: bytes, key: int, mode: str, initialVector: bytes = b'\xfd\xdf\xe2i_`\xdcJ\x028\xd1\x8b\x80C]\x89') -> bytes:
         if mode == 'ECB':
             blocks = self.getBlocks(cypher)
             for block in blocks:
@@ -347,19 +352,14 @@ if __name__ == "__main__":
     aes = AES()
     key = 23251443973595272567448928302682049732685763840581622945930246895828608753669
     iv = b'\xee'*16
-    f = open('todo.txt','rb')
+    fp = input("enter filepath: ")
+    f = open(fp,'rb')
     data = f.read()
     f.close()
-    e = aes.encryption(data,key,'CBC',iv)
-    d = aes.decryption(e,key,'CBC',iv)
+    e = aes.encryption(data,key,'CBC')
+    d = aes.decryption(e,key,'CBC')
     
-    print('\n'*3)
-    print(data.decode())
-    print('\n'*3)
-    print(d.decode())
-    print('\n'*3)
-    
-    f = open("test.txt", "wb")
+    f = open("res.txt", "wb")
     f.write(d)
     f.close()
    

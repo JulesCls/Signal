@@ -22,43 +22,45 @@ class Message:
     _message:bytes = None
     _sender:str = None
     _recipient:str = None
+    _filepath:str = None
     
 
 
-    def __init__(self,message:bytes,sender:str,recipient:str,sk_data:SK_DATA = None):
+    def __init__(self,message:bytes,sender:str,recipient:str,filepath: str, sk_data:SK_DATA = None):
 
         self._timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self._message = message
         self._sk_data = sk_data
         self._recipient = recipient
         self._sender = sender
+        self._filepath = filepath
 
     @classmethod
     def load_json(cls, json_data:str):
         
         data = json.loads(json_data)
-        message = cls(base64.b64decode(data["message"]),data["sender"] ,data["recipient"],data["sk_data"])
+        message = cls(base64.b64decode(data["message"]),data["sender"] ,data["recipient"],data['filepath'],data["sk_data"])
         message._timestamp = data["timestamp"]
         return message
 
-    def __dict__(self):
-        # renvoie un dictionnaire contenant les attributs de l'instance
-        return {
-            'timestamp': self._timestamp,
-            'sk_data': self._sk_data,
-            "sender": self._sender,
-            "recipient": self._recipient,
-            "message": self._message
-        }
+    # def __dict__(self):
+    #     # renvoie un dictionnaire contenant les attributs de l'instance
+    #     return {
+    #         'timestamp': self._timestamp,
+    #         'sk_data': self._sk_data,
+    #         "sender": self._sender,
+    #         "recipient": self._recipient,
+    #         "message": self._message
+    #     }
     
-    def __json__(self):
-        return {
-            'timestamp': self._timestamp,
-            'sk_data': self._sk_data,
-            "sender": self._sender,
-            "recipient": self._recipient,
-            "message": self._message
-        }
+    # def __json__(self):
+    #     return {
+    #         'timestamp': self._timestamp,
+    #         'sk_data': self._sk_data,
+    #         "sender": self._sender,
+    #         "recipient": self._recipient,
+    #         "message": self._message
+    #     }
 
     def get_sk_data(self) -> SK_DATA:
         return self._sk_data
@@ -74,6 +76,9 @@ class Message:
 
     def get_message(self) -> bytes:
         return self._message
+    
+    def get_filepath(self) -> str:
+        return self._filepath
 
     def set_sk_data(self,sk_data:SK_DATA):
         self._sk_data = sk_data
@@ -88,8 +93,8 @@ class Message:
             'sk_data': self._sk_data,
             "sender": self._sender,
             "recipient": self._recipient,
-            "message": base64.b64encode(self._message).decode('ascii')
-            
+            "message": base64.b64encode(self._message).decode('ascii'),
+            "filepath": self._filepath
         }
 
 

@@ -14,7 +14,6 @@ class Elgamal():
     #     publicKey = expo_rapide(self._g,secretKey,self._p) #user.getPublicID
     #     return (publicKey,secretKey)
     
-
     def sign(self,message:bytes,private_key:int):
         y = self._generate_y()
         s1 = expo_rapide(self._g,y,self._p)
