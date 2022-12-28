@@ -68,7 +68,6 @@ class Server:
         return data
 
     def _remove_otpk_stored_from_target(self,target:str,otpk:int):
-        print(target)
         file = os.path.join(self._server_directory_path,target+".json")
         data = None
         with open(file,"r") as f:

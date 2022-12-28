@@ -19,12 +19,11 @@ class SK(TypedDict):
     message_key:bytes
 
 
-
 class User:
     _name:str = ""
     _id:idCouple #public/private id
     _server:Server = Server()
-    _sk:SK = None
+    _sks:Dict[str,SK]
     _pk:idCouple
     _user_directory:str = None
 
@@ -32,7 +31,7 @@ class User:
 
     def __init__(self,_name:str) -> None:
         self._name = _name
-        self._sk =self._pk = {"chain_key": None, "message_key" : None}
+        self._sks = {}
         self._user_directory = os.path.abspath(os.path.join(os.path.dirname(__file__),self._name))
         self._id = {"public": None, "private" : None}
         if not(self.load_saved_info()):
@@ -84,13 +83,27 @@ class User:
     
     def send_message(self,message:str,target:str) -> bool:
         message =  Message(message.encode(),self._name,target)
-        if None in self._sk.values():
-            sk_pub_data:SK_DATA = self._initialize_sk(target)
-            message.set_sk_data(sk_pub_data)
-        rc4 = RC4(self._sk["message_key"])
+        if target not in self._sks.values():
+                self._initalize_target_sk(target)
+                if self._sks[target] is None or None in self._sks[target].values():
+                    sk_pub_data:SK_DATA = self._initialize_sk(target)
+                    message.set_sk_data(sk_pub_data)
+        rc4 = RC4(self._sks[target]["message_key"])
         message.set_message(rc4.encrypt(message.get_message()))
         self._server.send_message(message)
-        self._ratchet_sk()
+        self._ratchet_sk(target)
+
+    def get_pending_messages(self): #fecth messages from server
+        messages = self._server.get_user_messages(self)
+        if messages != []:
+            messages.sort(key= lambda x: x.get_timestamp())
+            for message in messages:
+                if message.get_sk_data():
+                    self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
+                rc4 = RC4(self._sks[message.get_sender()]["message_key"])
+                clear_message = rc4.decrypt(message.get_message())
+                self._ratchet_sk(message.get_sender())
+                print(f"{message.get_sender():<10}{clear_message.decode()}")
 
     def _initialize_sk(self,target) -> SK_DATA:
         kdf = HMAC256()
@@ -98,15 +111,14 @@ class User:
         target_data = self._server.share_public_info_target_to_user(target)
         if not elgamal.verify(target_data["pk"].to_bytes(256,"big"),*target_data["signature"],target_data["id"]):
             raise Exception("Invalid pk signature verification")
-
         ephemeral_key_private = secrets.randbelow(self._server.get_public_prime()-2)
         ephemeral_key_public = expo_rapide(self._server.get_public_generator(),ephemeral_key_private,self._server.get_public_prime())
         dh1 = self._dh(self._id["private"],target_data["pk"])
         dh2 = self._dh(ephemeral_key_private,target_data["id"])
         dh3 = self._dh(ephemeral_key_private,target_data["pk"])
         dh4 = self._dh(ephemeral_key_private,target_data["otpk"])
-        self._sk["message_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x01')
-        self._sk["chain_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x02')
+        self._sks[target]["message_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x01')
+        self._sks[target]["chain_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x02')
         return {"otpk":target_data["otpk"],"ephemeral":ephemeral_key_public,"signature":elgamal.sign(ephemeral_key_public.to_bytes(256,"big"),self._id["private"])}
 
     def _calculate_sk_from_received_data(self,received_data:SK_DATA,sender:str):
@@ -119,32 +131,22 @@ class User:
         dh2 = self._dh(self._id["private"],received_data["ephemeral"])
         dh3 = self._dh(self._pk["private"],received_data["ephemeral"])
         dh4 = self._dh(self._retrieve_otpk_private(received_data["otpk"]),received_data["ephemeral"])
-        self._sk["message_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x01')
-        self._sk["chain_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x02')
+        self._initalize_target_sk(sender)
+        self._sks[sender]["message_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x01')
+        self._sks[sender]["chain_key"] = kdf.digest(concatenateSK(dh1,dh2,dh3,dh4),b'\x02')
 
-
-    def get_pending_messages(self): #fecth messages from server
-        messages = self._server.get_user_messages(self)
-        if messages != []:
-            messages.sort(key= lambda x: x.get_timestamp())
-            for message in messages:
-                if message.get_sk_data():
-                    self._calculate_sk_from_received_data(message.get_sk_data(),message.get_sender())
-                rc4 = RC4(self._sk["message_key"])
-                clear_message = rc4.decrypt(message.get_message())
-                self._ratchet_sk()
-                print(f"{message.get_sender():<10}{clear_message.decode()}")
-
-        
-    def _ratchet_sk(self): #ratchet sk
+    def _ratchet_sk(self,target): #ratchet sk
         kdf = HMAC256()
-        if None not in self._sk.keys():
-            self._sk["message_key"] = kdf.digest(self._sk["chain_key"],b'\x01')
-            self._sk["chain_key"] = kdf.digest(self._sk["chain_key"],b'\x02')
-            
+        self._sks[target]["message_key"] = kdf.digest(self._sks[target]["chain_key"],b'\x01')
+        self._sks[target]["chain_key"] = kdf.digest(self._sks[target]["chain_key"],b'\x02')
+ 
 
     def _dh(self,x1:int,x2:int): #used to calculate shared key
         return expo_rapide(x2,x1,self._server.get_public_prime())
+
+    def _initalize_target_sk(self,target):
+        if target not in self._sks.keys() or self._sks[target] == None or  None in self._sks[target].values():
+            self._sks[target] = {"message_key":None,"chain_key":None}
 
     #used to load and save otpk keys
     def _load_otpk(self) -> List[Tuple[int,int]]:
