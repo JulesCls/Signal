@@ -1,6 +1,9 @@
 import struct
+from typing import List
 
 class SHA256:
+    mask = 0xffffffff
+
     def __init__(self):
         # Initialise les variables nécessaires
         self.h0 = 0x6a09e667
@@ -59,16 +62,16 @@ class SHA256:
                 self._right_rotate(words[i-15], 18) ^ (words[i-15] >> 3)
             s1 = self._right_rotate(words[i-2], 17) ^ \
                 self._right_rotate(words[i-2], 19) ^ (words[i-2] >> 10)
-            words.append((words[i-16] + s0 + words[i-7] + s1) & 0xffffffff)
+            words.append((words[i-16] + s0 + words[i-7] + s1) & self.mask)
         return words
 
-    def _right_rotate(self, n, d):
+    def _right_rotate(self, n:int, d:int) -> int:
         """
         Effectue un rotation de n à droite de d bits
         """
-        return (n >> d) | (n << (32 - d)) & 0xffffffff
+        return (n >> d) | (n << (32 - d)) & self.mask
 
-    def _compress(self, words):
+    def _compress(self, words:List[int]) -> None:
         """
         Compresse 512 bits en 256
         """
@@ -78,43 +81,43 @@ class SHA256:
             s1 = self._right_rotate(e, 6) ^ self._right_rotate(e, 11) ^ \
                  self._right_rotate(e, 25)
             ch = (e & f) ^ ((~e) & g)
-            temp1 = (h + s1 + ch + self.k[i] + words[i]) & 0xffffffff
+            temp1 = (h + s1 + ch + self.k[i] + words[i]) & self.mask
             s0 = self._right_rotate(a, 2) ^ self._right_rotate(a, 13) ^ \
                  self._right_rotate(a, 22)
             maj = (a & b) ^ (a & c) ^ (b & c)
-            temp2 = (s0 + maj) & 0xffffffff
+            temp2 = (s0 + maj) & self.mask
 
             h = g
             g = f
             f = e
-            e = (d + temp1) & 0xffffffff
+            e = (d + temp1) & self.mask
             d = c
             c = b
             b = a
-            a = (temp1 + temp2) & 0xffffffff
+            a = (temp1 + temp2) & self.mask
 
-        self.h0 = (self.h0 + a) & 0xffffffff
-        self.h1 = (self.h1 + b) & 0xffffffff
-        self.h2 = (self.h2 + c) & 0xffffffff
-        self.h3 = (self.h3 + d) & 0xffffffff
-        self.h4 = (self.h4 + e) & 0xffffffff
-        self.h5 = (self.h5 + f) & 0xffffffff
-        self.h6 = (self.h6 + g) & 0xffffffff
-        self.h7 = (self.h7 + h) & 0xffffffff
+        self.h0 = (self.h0 + a) & self.mask
+        self.h1 = (self.h1 + b) & self.mask
+        self.h2 = (self.h2 + c) & self.mask
+        self.h3 = (self.h3 + d) & self.mask
+        self.h4 = (self.h4 + e) & self.mask
+        self.h5 = (self.h5 + f) & self.mask
+        self.h6 = (self.h6 + g) & self.mask
+        self.h7 = (self.h7 + h) & self.mask
 
-    def _hexdigest(self):
+    def _hexdigest(self)->str:
         """
         Retourne l'empreinte hexadécimale
         """
         return '{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}'.format(self.h0, self.h1, self.h2, self.h3,self.h4, self.h5, self.h6, self.h7)
 
-    def digest(self, message_bytes):
+    def digest(self, message_bytes)->bytes:
         """
         Retourne l'empreinte bytes
         """
         return bytes.fromhex(self.hexdigest(message_bytes))
 
-    def arraydigest(self,message_bytes):
+    def arraydigest(self,message_bytes)->bytearray:
         """
         Retourne l'empreinte bytearray
         """
@@ -127,7 +130,7 @@ class SHA256:
             self.process_block(block)
 
     
-    def hexdigest(self, message_bytes):
+    def hexdigest(self, message_bytes)->str:
         self.h0 = 0x6a09e667
         self.h1 = 0xbb67ae85
         self.h2 = 0x3c6ef372
