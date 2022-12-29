@@ -33,32 +33,21 @@ class SHA256:
         Ajoute des octets de padding au message binaire
         """
         ml = len(message_bytes) * 8  # Message length in bits
-        # Ajoute un '1' à la fin
-        message_bytes += b'\x80'
-
-        # Ajoute des zéros jusqu'à ce que le message soit de 448 bits (message_bytes.length*8 + 512 bits)
-        while len(message_bytes) % 64 != 56:
+        message_bytes += b'\x80' # Ajoute un '1' à la fin
+        while len(message_bytes) % 64 != 56:  # Ajoute des zéros jusqu'à ce que le message soit de 448 bits (message_bytes.length*8 + 512 bits)
             message_bytes += b'\x00'
-
-        # Ajoute la taille du message en bits (64 bits)
-        message_bytes += struct.pack(b'>Q', ml)
-
+        message_bytes += struct.pack(b'>Q', ml) # Ajoute la taille du message en bits (64 bits)
         return message_bytes
 
     def _split_chunks(self, padded_message):
-        """
-        Divise le message en chunks de 512 bits
-        """
-        # Découpe le message en chunks de 64 octets (64*8=512)
-        chunks = [padded_message[i:i+64] for i in range(0, len(padded_message), 64)]
+        chunks = [padded_message[i:i+64] for i in range(0, len(padded_message), 64)] # Découpe le message en chunks de 64 octets (64*8=512)
         return chunks
 
     def _get_words(self, chunk):
         """
         Convertit un chunk de 64 octets en 16 mots de 32 bits
         """
-        # Découpe le chunk en 16 mots de 32 bits
-        words = struct.unpack(b'>16L', chunk)
+        words = struct.unpack(b'>16L', chunk) # Découpe le chunk en 16 mots de 32 bits
         return list(words)
 
     def _extend_words(self, words):
@@ -120,9 +109,15 @@ class SHA256:
         return '{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}{:08x}'.format(self.h0, self.h1, self.h2, self.h3,self.h4, self.h5, self.h6, self.h7)
 
     def digest(self, message_bytes):
+        """
+        Retourne l'empreinte bytes
+        """
         return bytes.fromhex(self.hexdigest(message_bytes))
 
     def arraydigest(self,message_bytes):
+        """
+        Retourne l'empreinte bytearray
+        """
         return bytearray.fromhex(self.hexdigest(message_bytes))
     
     def update(self, data):
@@ -144,25 +139,13 @@ class SHA256:
         """
         Retourne l'empreinte hexadecimale SHA256 du message binaire passé en paramètre
         """
-        # Ajoute des octets de padding au message binaire
-        padded_message = self._padding(message_bytes)
-
-        # Découpe le message en chunks de 512 bits
-        chunks = self._split_chunks(padded_message)
-
-        # Traitement des chunks
-        for chunk in chunks:
-            # Convertit le chunk en mots de 32 bits
-            words = self._get_words(chunk)
-
-            # Étend la liste des mots à 64
-            words = self._extend_words(words)
-
-            # Compresse 512 bits en 256
-            self._compress(words)
-
-        # Retourne le bytearray de l'empreinte hexadécimale
-        return self._hexdigest()
+        padded_message = self._padding(message_bytes)# Ajoute des octets de padding au message binaire
+        chunks = self._split_chunks(padded_message)# Découpe le message en chunks de 512 bits
+        for chunk in chunks: # Traitement des chunks
+            words = self._get_words(chunk) # Convertit le chunk en mots de 32 bits
+            words = self._extend_words(words) # Étend la liste des mots à 64
+            self._compress(words)# Compresse 512 bits en 256
+        return self._hexdigest()  # Retourne le bytearray de l'empreinte hexadécimale
 
 import hashlib
 

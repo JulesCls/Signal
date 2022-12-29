@@ -1,14 +1,14 @@
 class RC4:
     S = []
 
-    def __init__(self,key:bytes) -> None:
+    def __init__(self,key:bytes) -> None: #use the key to set S 
         self.S = [i for i in range(256)]
         j = 0
         for i in range(256):
             j = (j + self.S[i] + key[i % len(key)]) % 256
             self.S[i], self.S[j] = self.S[j], self.S[i]
 
-    def __generate_random_flow(self):
+    def __generate_random_flow(self):#use S to set the pseudo random flow
         i = 0
         j = 0
         while True:
@@ -18,14 +18,14 @@ class RC4:
             K = self.S[(self.S[i] + self.S[j]) % 256]
             yield K
 
-    def encrypt(self, plain_text:bytes):
+    def encrypt(self, plain_text:bytes): #encrypt using the pseudo random flow
         generator = self.__generate_random_flow()
         cipher_text:bytearray = []
         for char in plain_text:
             cipher_text.append(char ^ next(generator))
         return bytes(cipher_text)
 
-    def decrypt(self, cipher_text:bytes):
+    def decrypt(self, cipher_text:bytes):#decryption is the same as encryption with the same key
         return self.encrypt(cipher_text)
         
 

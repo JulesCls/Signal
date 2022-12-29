@@ -54,20 +54,20 @@ class Server:
             raise Exception("Le nom de fichier contenant les nombres publics du démarrage sont incorrectes ou bien le format n'est pas respecté.")
         
 
-    def _generate_new_public_numbers(self):
+    def _generate_new_public_numbers(self): #generate p prime number and g a generator that will be used for next uses as public information of the server
         p_g = utils.get_number_with_generator_element()
         with open(self._public_info_storage,"w") as f:
             f.write(json.dumps(p_g))
         print("Generation done.")
 
-    def share_public_info_target_to_user(self,target:str):
+    def share_public_info_target_to_user(self,target:str): #retrieve public information of a user on the server and chose one otpk key from him
         data = self.get_public_info_of_user(target)
         otpk = random.choice(data["otpk"])
         data["otpk"] = otpk
         self._remove_otpk_stored_from_target(target,otpk)
         return data
 
-    def _remove_otpk_stored_from_target(self,target:str,otpk:int):
+    def _remove_otpk_stored_from_target(self,target:str,otpk:int): #remove the user otpk choses previously that is stored on the server
         file = os.path.join(self._server_directory_path,target+".json")
         data = None
         with open(file,"r") as f:
@@ -77,23 +77,23 @@ class Server:
             f.write(json.dumps(data))
 
 
-    def get_public_info_of_user(self,username):
+    def get_public_info_of_user(self,username): #load information of a user on the server
         file = os.path.join(self._server_directory_path,username+".json")
         if os.path.exists(file):
             with open(file,"r") as f:
                     return json.loads(f.read())
         raise Exception("Utilisateur introuvable.")
 
-    def get_id_of_user(self,username):
+    def get_id_of_user(self,username): #return the id of the user on the server
         return self.get_public_info_of_user(username)["id"]
 
         
-    def publish_user_info(self,user):
+    def publish_user_info(self,user): #save the information of a user on the server
         file = os.path.join(self._server_directory_path,user.get_name()+".json")
         with open(file,"w") as f:
             f.write(json.dumps(user.share_info_to_server()))
 
-    def update_user_info(self,user):
+    def update_user_info(self,user): #used to update pk if user has changed it
         try:
             data = self.get_public_info_of_user(user.get_name())
             if len(data["otpk"]) < 10:
@@ -104,10 +104,10 @@ class Server:
         except:
             self.publish_user_info(user)
 
-    def connect_user(self,user):
+    def connect_user(self,user): #connect a user to the server
         self.update_user_info(user)
 
-    def get_user_messages_from_target(self,user,target) -> List[Message]:
+    def get_user_messages_from_target(self,user,target) -> List[Message]: #retrive a list of messages destined to a user from another user
         messages = self.read_messages_from_file()
         name = user.get_name()
         if name in messages.keys():
@@ -121,7 +121,7 @@ class Server:
             return data
         return []
 
-    def send_message(self,message:Message) -> False:
+    def send_message(self,message:Message) -> False: #add message to the message.json file on the server
         messages = self.read_messages_from_file()
         if message.get_recipient() in messages.keys():
             messages[message.get_recipient()].append(message)
@@ -131,7 +131,7 @@ class Server:
             
 
 
-    def write_messages_to_file(self,messages:user_messages):
+    def write_messages_to_file(self,messages:user_messages): #save messages to file message.json on the server
         file = os.path.join(self._server_directory_path,"messages.json")
         with open(file,"w") as f:
             f.write(json.dumps(messages))
@@ -149,22 +149,3 @@ class Server:
             return server_messages
         else:
             return {}
-
-
-
-    # def get_conversation_directory_name(self,user,target:str) -> str:
-    #     conversation_directory = self._server_directory_path
-    #     username = user.get_name()
-    #     if username > target:
-    #         conversation_directory =  os.path.join(conversation_directory, target +"-"+ username)
-    #     else:
-    #         conversation_directory =  os.path.join(conversation_directory, username +"-"+ target)
-    #     return conversation_directory
-            
-
-
-
-
-
-    
-

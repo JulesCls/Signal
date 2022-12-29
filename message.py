@@ -3,6 +3,9 @@ import json, os
 from typing import Tuple,List, TypedDict
 import base64
 
+'''
+Méthode _default récupérée sur stack overflow, utilisée pour changer les méthodes de bases utilisées par json.dumps(), cela permet de sérialiser la classe.
+'''
 from json import JSONEncoder
 
 def _default(self, obj):
@@ -10,6 +13,8 @@ def _default(self, obj):
 
 _default.default = JSONEncoder.default  # Save unmodified default.
 JSONEncoder.default = _default # Replace it.
+
+
 
 class SK_DATA(TypedDict):
     otpk:int
@@ -27,7 +32,6 @@ class Message:
 
 
     def __init__(self,message:bytes,sender:str,recipient:str,filepath: str, sk_data:SK_DATA = None):
-
         self._timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self._message = message
         self._sk_data = sk_data
@@ -36,31 +40,11 @@ class Message:
         self._filepath = filepath
 
     @classmethod
-    def load_json(cls, json_data:str):
-        
+    def load_json(cls, json_data:str): #permet de lire une chaine de caractères JSON et d'ensuite créer une instance de l'objet message
         data = json.loads(json_data)
         message = cls(base64.b64decode(data["message"]),data["sender"] ,data["recipient"],data['filepath'],data["sk_data"])
         message._timestamp = data["timestamp"]
         return message
-
-    # def __dict__(self):
-    #     # renvoie un dictionnaire contenant les attributs de l'instance
-    #     return {
-    #         'timestamp': self._timestamp,
-    #         'sk_data': self._sk_data,
-    #         "sender": self._sender,
-    #         "recipient": self._recipient,
-    #         "message": self._message
-    #     }
-    
-    # def __json__(self):
-    #     return {
-    #         'timestamp': self._timestamp,
-    #         'sk_data': self._sk_data,
-    #         "sender": self._sender,
-    #         "recipient": self._recipient,
-    #         "message": self._message
-    #     }
 
     def get_sk_data(self) -> SK_DATA:
         return self._sk_data
@@ -90,7 +74,7 @@ class Message:
         self._sk_data = None
 
 
-    def to_json(self):
+    def to_json(self): #retourner un objet au format JSON
         return {
             'timestamp': self._timestamp,
             'sk_data': self._sk_data,

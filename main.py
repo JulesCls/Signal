@@ -1,3 +1,4 @@
+
 from user import User
 from server import Server
 
@@ -32,8 +33,8 @@ def execute_input(input_str:str,user:User,target:str):
 def channel_connection(user:User,target_name:str):
     user.connect_to_target(target_name)
     user_input = ""
+    user.print_target_conversation(target_name)
     while user_input != "quit":
-        user.print_target_conversation(target_name)
         show_channel_possibilites()
         user_input = input("Choix :")
         if user_input != "quit":
@@ -45,35 +46,6 @@ def channel_connection(user:User,target_name:str):
 import os
 
 if __name__ == "__main__":
-    # server = Server()
-    
-    # alice = User("alice")
-    # bob = User("bob")
-    # alice.connect_to_target('bob')
-    # bob.connect_to_target('alice')
-    # bob.print_target_conversation("alice")
-    # bob.send_message("comment vas-tu alice ?","alice")
-    # bob.print_target_conversation("alice")
-
-
-    
-    # alice.connect_to_server()
-    # alice.send_message("salut comment vas-tu mon amis","bob")
-    # alice.send_message("c'est alice","bob")
-    # bob = User("bob")
-    # bob.connect_to_server()
-    # bob.get_pending_messages()
-    # bob.send_message("hey alice comment vas-tu ?","alice")
-    # bob.send_message("je suis allé au parc hier","alice")
-    # alice.get_pending_messages()
-    # alice._sks["bob"] = None
-    # alice.send_message("je suis allé au parc hier","bob")
-    # bob.get_pending_messages()
-    # bob.send_message("je suis allé au parc hier moi aussi","alice")
-    # alice.get_pending_messages()
-
-    # # alice.send_message("salut","bob")
-
     user_input = input("Entrez votre nom d'utilisateur:")
     user = User(user_input)
     print(f"Bonjour {user.get_name()}:")
