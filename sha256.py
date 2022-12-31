@@ -56,6 +56,7 @@ class SHA256:
     def _extend_words(self, words):
         """
         Étend la liste des mots de 16 à 64
+        opérateur ^ \ récupéré depuis stack overflow également
         """
         for i in range(16, 64):
             s0 = self._right_rotate(words[i-15], 7) ^ \
@@ -68,6 +69,7 @@ class SHA256:
     def _right_rotate(self, n:int, d:int) -> int:
         """
         Effectue un rotation de n à droite de d bits
+        aide de stack overflow afin d'avoir une rotation rapide
         """
         return (n >> d) | (n << (32 - d)) & self.mask
 
