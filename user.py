@@ -96,12 +96,13 @@ class User:
         self._random_sk_reinitialization(target) #try to reinitialize the secret key
         if is_file == False: #if simple message
             message =  Message(msg.encode(),self._name,target, None) #crate a message
-            self._add_messages(message,sender=True) #add the message to the private storage of the user
+            historic_message = Message(msg.encode(),self._name,target, None)
             if target not in self._sks.values(): #if no secret key shared with the targeted user
                     self._initalize_target_sk(target) #sk initialization
                     if self._sks[target] is None or None in self._sks[target].values():
                         sk_pub_data:SK_DATA = self._initialize_sk(target) #sk calculation for initialization
                         message.set_sk_data(sk_pub_data) #add sk data to the message
+            self._add_messages(historic_message,sender=True) #add the message to the private storage of the user
             rc4 = RC4(self._sks[target]["message_key"]) 
             message.set_message(rc4.encrypt(message.get_message()))#encrypt the message with the secret key
             self._server.send_message(message) #send the message to the server for storage
@@ -114,12 +115,13 @@ class User:
             data_file = f.read()
             f.close()
             message =  Message(data_file,self._name,target, filepath)
-            self._add_messages(message,sender=True)
+            historic_message = Message(data_file,self._name,target, filepath)
             if target not in self._sks.values():
                     self._initalize_target_sk(target)
                     if self._sks[target] is None or None in self._sks[target].values():
                         sk_pub_data:SK_DATA = self._initialize_sk(target)
                         message.set_sk_data(sk_pub_data)
+            self._add_messages(historic_message,sender=True)
             aes = AES()
             message.set_message(aes.encryption(message.get_message(),int.from_bytes(self._sks[target]["message_key"],'big'),'CBC'))
             self._server.send_message(message)
@@ -267,6 +269,7 @@ class User:
         if messages == []:
             print("Vous n'avez pas de messages.")
         else:
+            print(f"Conversation entre vous même et {target}")
             for message in messages:
                 if message.get_filepath():
                     print(f"[{message.get_timestamp()}] {message.get_sender()} a envoyé le fichier {os.path.basename(message.get_filepath())}")

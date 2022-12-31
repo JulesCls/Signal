@@ -48,12 +48,19 @@ import os
 
 if __name__ == "__main__":
     user_input = input("Entrez votre nom d'utilisateur: ")
-    user = User(user_input)
+    user = User(user_input.strip())
     print(f"Bonjour {user.get_name()} ! ")
     print("Il est possible de quitter l'application en utilisant la commande 'quit'")
+    print("Afin d'actualiser vos messages vous pouvez utiliser le touche entrer.")
+    print()
+    print('#'*20 + "  Début de l'application  " + '#'*20)
+    print()
     while user_input != "quit":
-        user_input = input("A quel utilisateur souhaitez vous envoyer un message : ")
-        channel_connection(user,user_input)
+        user_input = input("A quel utilisateur souhaitez vous envoyer un message : ").strip()
+        if user_input == user.get_name():
+            print("Impossible de vous envoyer un message à vous même.")
+        else:
+            channel_connection(user,user_input)
         
 
 
